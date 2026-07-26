@@ -158,7 +158,7 @@ with tab_report:
 
     EDA_FIGS = [
         ("fig0_preparation_validation.png", "Data preparation & validation checks"),
-        ("fig1_churn_donut.png", "Overall customer churn distribution"),
+        ("fig1_churn_pie.png", "Overall customer churn distribution"),
         ("fig2_mosaic_categorical.png", "Categorical feature relationships (mosaic plot)"),
         ("fig3_cramers_v_lollipop.png", "Association strength of categorical features (Cramer's V)"),
         ("fig4_numeric_violin.png", "Distribution of numeric features by churn status"),
