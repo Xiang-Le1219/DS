@@ -214,11 +214,11 @@ with tab_report:
         show_gallery(CORR_FIGS)
 
     with sub3:
-        show_gallery(MODEL_FIGS)
-        results_path = APP_DIR / "model_comparison_results.csv"
         if results_path.exists():
             st.subheader("Metrics table")
             st.dataframe(pd.read_csv(results_path, index_col=0), use_container_width=True)
+        show_gallery(MODEL_FIGS)
+        results_path = APP_DIR / "model_comparison_results.csv"
 
     with sub4:
         show_gallery(IMPORTANCE_FIGS)
