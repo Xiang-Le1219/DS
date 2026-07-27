@@ -43,26 +43,7 @@ tab_scorer, tab_report = st.tabs(["Risk Scorer", "EDA & Model Report"])
 # TAB 1: Risk Scorer
 # ----------------------------------------------------------------------
 with tab_scorer:
-    st.subheader("1. Choose a model")
-    # Model picker - defaults to whichever model the notebook flagged as best,
-    # but any of the 4 trained models can be selected for prediction.
-    selected_model_name = st.selectbox(
-        "Model used to score this customer",
-        options=AVAILABLE_MODELS,
-        index=AVAILABLE_MODELS.index(BEST_MODEL_NAME),
-        help="All 4 models from the notebook (Part 5) are bundled in trained_models.pkl. "
-             "Random Forest was selected as the notebook's best model, but you can compare "
-             "predictions from any of them here.",
-    )
-    model = bundle["models"][selected_model_name]
-    metrics = bundle["results"].loc[selected_model_name]
-
-    is_best = selected_model_name == BEST_MODEL_NAME
-    badge = " (notebook's best model)" if is_best else " (not the notebook's best model)"
-    st.info(f"Model in use: **{selected_model_name}**{badge}  |  Test F1 = {metrics['F1']:.3f}  |  "
-            f"Recall = {metrics['Recall']:.3f}  |  ROC-AUC = {metrics['ROC-AUC']:.3f}")
-
-    st.subheader("2. Customer profile")
+    st.subheader("1. Customer profile")
     c1, c2 = st.columns(2)
     with c1:
         tenure = st.slider("Tenure (months)", 0, 72, 12)
@@ -77,7 +58,7 @@ with tab_scorer:
         dependents = st.selectbox("Has dependents", ["No", "Yes"])
         paperless = st.selectbox("Paperless billing", ["No", "Yes"])
 
-    st.subheader("3. Services")
+    st.subheader("2. Services")
     s1, s2 = st.columns(2)
     with s1:
         phone = st.checkbox("Phone service", value=True)
@@ -106,39 +87,24 @@ with tab_scorer:
 
     st.caption(f"Estimated total charges: RM {total:,.2f}  (tenure x monthly charges)")
 
-    if st.button("Score this customer", type="primary", use_container_width=True):
-        row = pd.DataFrame([raw])
+    submitted = st.button("Score this customer", type="primary", use_container_width=True)
 
+    # 预处理数据和风险分析（独立于模型，提交后展示一次）
+    if submitted:
         # Rebuild the engineered features exactly as in Part 2 of the notebook
-        row["tenure_group"] = pd.cut(row["tenure"], bins=[-1, 12, 24, 48, 72],
+        row_base = pd.DataFrame([raw])
+        row_base["tenure_group"] = pd.cut(row_base["tenure"], bins=[-1, 12, 24, 48, 72],
                                      labels=["0-12m", "13-24m", "25-48m", "49-72m"])
-        row["num_services"] = (row[bundle["service_cols"]] == "Yes").sum(axis=1)
+        row_base["num_services"] = (row_base[bundle["service_cols"]] == "Yes").sum(axis=1)
 
         for c in bundle["binary_cols"]:
-            row[c] = row[c].map({"No": 0, "Yes": 1, "Female": 0, "Male": 1})
-        row = pd.get_dummies(row, columns=bundle["nominal_cols"], drop_first=False, dtype=int)
+            row_base[c] = row_base[c].map({"No": 0, "Yes": 1, "Female": 0, "Male": 1})
+        row_base = pd.get_dummies(row_base, columns=bundle["nominal_cols"], drop_first=False, dtype=int)
 
         # Align to the exact training columns (missing dummies -> 0, extras dropped)
-        row = row.reindex(columns=FEATURES, fill_value=0).astype(float)
+        row_base = row_base.reindex(columns=FEATURES, fill_value=0).astype(float)
 
-        # Only Logistic Regression was trained on scaled numeric features -
-        # scale here only if the currently selected model needs it.
-        if selected_model_name in bundle["needs_scaling"]:
-            row[bundle["numeric_cols"]] = bundle["scaler"].transform(row[bundle["numeric_cols"]])
-
-        proba = float(model.predict_proba(row)[0, 1])
-        pred = int(model.predict(row)[0])
-
-        st.subheader("4. Result")
-        st.caption(f"Prediction generated using **{selected_model_name}**")
-        st.metric("Churn probability", f"{proba:.1%}")
-        st.progress(min(proba, 1.0))
-
-        if pred == 1:
-            st.error("**HIGH RISK - flag for retention contact.**")
-        else:
-            st.success("**LOW RISK - no retention action required.**")
-
+        st.subheader("3. Risk Analysis")
         st.markdown("**Risk factors present in this profile** (from the notebook's EDA):")
         flags = []
         if contract == "Month-to-month":
@@ -151,6 +117,7 @@ with tab_scorer:
             flags.append("Electronic check payment - ~45.3% churn, roughly triple automatic methods")
         if not security and not support:
             flags.append("No online security and no tech support - both are associated with retention")
+        
         if flags:
             for fl in flags:
                 st.write(f"- {fl}")
@@ -162,6 +129,42 @@ with tab_scorer:
             actual = (peers["Churn"] == "Yes").mean()
             st.caption(f"Historical benchmark: {len(peers):,} customers in the data share this "
                        f"contract + internet combination, and {actual:.1%} of them churned.")
+
+    # 选项卡：展示所有可用的模型 (取代了原本的 st.selectbox)
+    st.subheader("4. Model Predictions")
+    st.caption("Select a model tab below to view its specific prediction and performance metrics.")
+    model_tabs = st.tabs(AVAILABLE_MODELS)
+
+    # 遍历所有模型并为其生成独立的选项卡内容
+    for idx, m_name in enumerate(AVAILABLE_MODELS):
+        with model_tabs[idx]:
+            model = bundle["models"][m_name]
+            metrics = bundle["results"].loc[m_name]
+
+            is_best = m_name == BEST_MODEL_NAME
+            badge = " (notebook's best model)" if is_best else ""
+            st.info(f"**{m_name}**{badge}  |  Test F1 = {metrics['F1']:.3f}  |  "
+                    f"Recall = {metrics['Recall']:.3f}  |  ROC-AUC = {metrics['ROC-AUC']:.3f}")
+
+            # 只有在点击提交按钮后，才会渲染预测结果
+            if submitted:
+                row_model = row_base.copy()
+                
+                # Only Logistic Regression was trained on scaled numeric features -
+                # scale here only if the currently selected model needs it.
+                if m_name in bundle["needs_scaling"]:
+                    row_model[bundle["numeric_cols"]] = bundle["scaler"].transform(row_model[bundle["numeric_cols"]])
+
+                proba = float(model.predict_proba(row_model)[0, 1])
+                pred = int(model.predict(row_model)[0])
+
+                st.metric("Churn probability", f"{proba:.1%}")
+                st.progress(min(proba, 1.0))
+
+                if pred == 1:
+                    st.error("**HIGH RISK - flag for retention contact.**")
+                else:
+                    st.success("**LOW RISK - no retention action required.**")
 
     st.divider()
     st.caption(
