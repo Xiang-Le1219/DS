@@ -45,13 +45,11 @@ tab_scorer, tab_report = st.tabs(["Risk Scorer", "EDA & Model Report"])
 with tab_scorer:
     st.subheader("1. Choose a model")
     
-    # 【修改点】：将 st.selectbox 替换为水平排列的 st.radio，视觉效果类似于 Tab/按钮，
-    # 且能够正常将用户选择的值赋给 selected_model_name 以供下方调用，完全不需要移动位置。
     selected_model_name = st.radio(
         "Model used to score this customer",
         options=AVAILABLE_MODELS,
         index=AVAILABLE_MODELS.index(BEST_MODEL_NAME),
-        horizontal=True,  # 横向平铺，实现类似选项卡的视觉效果
+        horizontal=True,  
         help="All 4 models from the notebook (Part 5) are bundled in trained_models.pkl. "
              "Random Forest was selected as the notebook's best model, but you can compare "
              "predictions from any of them here.",
