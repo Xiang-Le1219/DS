@@ -280,7 +280,14 @@ with tab_report:
         results_path = APP_DIR / "model_comparison_results.csv"
         if results_path.exists():
             st.subheader("Metrics table")
-            st.dataframe(pd.read_csv(results_path, index_col=0), use_container_width=True)
+           # Load the results dataframe
+            results_df = pd.read_csv(results_path, index_col=0)
+            
+            # Rename the Logistic Regression index to indicate it's the baseline
+            if "Logistic Regression" in results_df.index:
+                results_df = results_df.rename(index={"Logistic Regression": "Logistic Regression (base line)"})
+                
+            st.dataframe(results_df, use_container_width=True))
 
         # fig10 (overall model comparison) is shown full-width, right below the
         # metrics table, so it matches the table's width instead of being squeezed
