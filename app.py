@@ -287,7 +287,7 @@ with tab_report:
             if "Logistic Regression" in results_df.index:
                 results_df = results_df.rename(index={"Logistic Regression": "Logistic Regression (base line)"})
                 
-            st.dataframe(results_df, use_container_width=True))
+            st.dataframe(results_df, use_container_width=True)
 
         # fig10 (overall model comparison) is shown full-width, right below the
         # metrics table, so it matches the table's width instead of being squeezed
