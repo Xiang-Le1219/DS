@@ -215,11 +215,11 @@ def show_gallery(fig_list, columns=2):
 
 def highlight_model_rows(row):
     """Add distinct colours to the baseline and best-model rows."""
-    if row["Model"] == "Logistic Regression (Baseline)":
-        style = "background-color: #E7F0FF; color: #102A43; font-weight: 600;"
+    if row["Model"] == "Logistic Regression (Baseline Model)":
+        style = "background-color: #DCEBFF; color: #0B2E59; font-weight: 700;"
         return [style] * len(row)
-    if row["Model"] == "Random Forest (Best)":
-        style = "background-color: #E4F6EA; color: #173B24; font-weight: 600;"
+    if row["Model"] == "Random Forest (Best Model)":
+        style = "background-color: #DDF5E5; color: #123D24; font-weight: 700;"
         return [style] * len(row)
     return [""] * len(row)
 
