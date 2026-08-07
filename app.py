@@ -152,6 +152,19 @@ st.markdown(
     div.st-key-scorer_row div[data-testid="stHorizontalBlock"] {
         gap: 1.25rem !important;
     }
+
+    /* "3. Result" panel only - give it a bit more breathing room and a soft
+       shadow so it reads as the outcome card, distinct from the input cards
+       on the left. Targeted via its container key, same pattern as above. */
+    div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
+        border-radius: 1rem !important;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+    }
+
+    div.st-key-result_panel div[data-testid="stVerticalBlock"] {
+        padding: 0.25rem 0.4rem !important;
+        gap: 0.9rem !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -418,7 +431,7 @@ with tab_scorer:
         # RIGHT: result (gauge chart on top, risk-factor detail below)
         # --------------------------------------------------------------
         with right:
-            with st.container(border=True):
+            with st.container(border=True, key="result_panel"):
                 st.markdown("#### 3. Result")
                 result = st.session_state.get("result")
 
