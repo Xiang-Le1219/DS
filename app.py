@@ -394,8 +394,8 @@ with tab_model_evaluation:
         results_df = pd.read_csv(results_path, index_col=0)
 
         results_df = results_df.rename(index={
-            "Logistic Regression": "Logistic Regression (Baseline)",
-            "Random Forest": "Random Forest (Best)",
+            "Logistic Regression": "Logistic Regression (Baseline Model)",
+            "Random Forest": "Random Forest (Best Model)",
         })
 
         display_results = results_df.reset_index()
