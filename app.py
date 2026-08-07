@@ -418,7 +418,7 @@ with tab_scorer:
         # RIGHT: result (gauge chart on top, risk-factor detail below)
         # --------------------------------------------------------------
         with right:
-    with st.container(border=True):
+        with st.container(border=True):
         st.markdown("### Prediction Result")
         result = st.session_state.get("result")
  
