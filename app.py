@@ -37,31 +37,179 @@ BEST_MODEL_NAME = bundle["best_model_name"]
 AVAILABLE_MODELS = list(bundle["models"].keys())
 FEATURES = bundle["feature_names"]
 
-tab_scorer, tab_report = st.tabs(["Risk Scorer", "EDA & Model Report"])
+# Keep the original model keys for prediction, but show clearer names in the UI.
+MODEL_DISPLAY_NAMES = {
+    "Random Forest": "Random Forest (Best Model)",
+    "Logistic Regression": "Logistic Regression (Baseline Model)",
+}
+
+
+def format_model_name(model_name):
+    return MODEL_DISPLAY_NAMES.get(model_name, model_name)
+
+
+# Place Random Forest first and make it the default model in the scorer.
+DEFAULT_MODEL_NAME = "Random Forest" if "Random Forest" in AVAILABLE_MODELS else BEST_MODEL_NAME
+ORDERED_MODELS = [DEFAULT_MODEL_NAME] + [
+    model_name for model_name in AVAILABLE_MODELS if model_name != DEFAULT_MODEL_NAME
+]
+
+# Make all four radio choices use equal width across the page.
+st.markdown(
+    """
+    <style>
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        display: flex;
+        width: 100%;
+        gap: 0.75rem;
+    }
+
+    div[data-testid="stRadio"] div[role="radiogroup"] > label {
+        flex: 1 1 0;
+        justify-content: center;
+        margin: 0;
+        padding: 0.7rem 0.5rem;
+        border: 1px solid rgba(128, 128, 128, 0.35);
+        border-radius: 0.5rem;
+    }
+
+    div[data-testid="stRadio"] div[role="radiogroup"] > label p {
+        text-align: center;
+        white-space: normal;
+    }
+
+    @media (max-width: 900px) {
+        div[data-testid="stRadio"] div[role="radiogroup"] {
+            flex-wrap: wrap;
+        }
+
+        div[data-testid="stRadio"] div[role="radiogroup"] > label {
+            flex-basis: calc(50% - 0.375rem);
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# Each entry is (filename, image caption, presentation note).
+EDA_FIGS = [
+    ("fig0_preparation_validation.png", "Data preparation & validation checks",
+     "Confirms the dataset is clean before modelling: no duplicate rows, correct data types, "
+     "and missing values limited to the expected zero-tenure TotalCharges cases."),
+    ("fig1_churn_pie.png", "Overall customer churn distribution",
+     "About 1 in 4 customers (~26.5%) churned, so the target is imbalanced - this is why "
+     "Recall and F1 matter more than plain Accuracy for this problem."),
+    ("fig2_mosaic_categorical.png", "Categorical feature relationships (mosaic plot)",
+     "The churn share (colour) clearly shifts across contract type and internet service tiles, "
+     "flagging both as strong categorical predictors."),
+    ("fig3_cramers_v_lollipop.png", "Association strength of categorical features (Cramer's V)",
+     "Contract, OnlineSecurity, TechSupport and InternetService rank highest, making them the "
+     "categorical features worth highlighting first in the presentation."),
+    ("fig4_numeric_violin.png", "Distribution of numeric features by churn status",
+     "Churners cluster at low tenure and higher MonthlyCharges, while retained customers spread "
+     "across much longer tenures."),
+    ("fig5_ecdf.png", "Empirical cumulative distribution functions",
+     "The ECDF curves for churners sit further left on tenure and further right on "
+     "MonthlyCharges, backing up the pattern seen in the violin plots with cumulative evidence."),
+    ("fig6_interaction_heatmap.png", "Feature interaction heatmap",
+     "Risk compounds when features combine: month-to-month contract plus fiber optic internet "
+     "is the single riskiest combination in the heatmap."),
+    ("fig7_num_services_dual_axis.png", "Number of subscribed services vs churn rate",
+     "Churn rate drops steadily as customers add more services, even though most customers sit "
+     "at the low end of the service count."),
+    ("fig8_scatter_matrix.png", "Scatter matrix of numeric features",
+     "Numeric features alone only partly separate churners from non-churners, which is why the "
+     "categorical and engineered features are still needed for the model."),
+]
+
+CORR_FIGS = [
+    ("fig9a_correlation_full.png", "Full correlation matrix (all features)",
+     "Highlights expected collinearity (e.g. TotalCharges with tenure) that was considered "
+     "during feature engineering."),
+    ("fig9b_correlation_top15.png", "Top 15 correlated features",
+     "Contract- and tenure-related engineered features dominate the top 15 correlations with "
+     "churn."),
+    ("fig9c_correlation_ranked.png", "Features ranked by correlation with churn",
+     "Two-year contracts and long tenure correlate negatively with churn, while fiber optic and "
+     "month-to-month correlate positively - two ends of the same story."),
+]
+
+MODEL_FIGS = [
+    ("fig11_roc_curves.png", "ROC curves for all models",
+     "All four models clear the diagonal comfortably; Random Forest and XGBoost post the "
+     "highest AUC, meaning they rank churners vs non-churners best."),
+    ("fig12_confusion_matrices.png", "Confusion matrices for all models",
+     "Decision Tree and XGBoost catch slightly more true churners (higher recall) but at the "
+     "cost of more false alarms compared to Random Forest."),
+    ("fig13_cv_stability.png", "Cross-validation stability across folds",
+     "Random Forest and XGBoost show tight, consistent scores across folds, indicating the "
+     "results generalise rather than depending on one lucky data split."),
+    ("fig14_overfitting_check.png", "Train vs test performance (overfitting check)",
+     "The train-test gap stays small for Random Forest, suggesting limited overfitting compared "
+     "to the wider gap on the Decision Tree."),
+]
+
+IMPORTANCE_FIGS = [
+    ("fig15_feature_importance.png", "Feature importance (best model)",
+     "Contract, tenure and TotalCharges carry the most weight when the Random Forest splits "
+     "churners from non-churners."),
+    ("fig16_correlation_vs_importance.png", "Correlation vs model-based feature importance",
+     "Model-based importance mostly agrees with the raw correlation ranking, which is a good "
+     "sanity check that the model is picking up genuine signal rather than noise."),
+    ("fig17_permutation_importance.png", "Permutation importance",
+     "Permutation importance confirms Contract and tenure as the features whose removal hurts "
+     "predictive performance the most."),
+]
+
+
+def show_gallery(fig_list, columns=2):
+    """Render figures in a responsive grid and flag any missing image files."""
+    cols = st.columns(columns)
+    for i, (filename, caption, note) in enumerate(fig_list):
+        path = APP_DIR / filename
+        with cols[i % columns]:
+            if path.exists():
+                st.image(str(path), caption=caption, use_container_width=True)
+                st.caption(note)
+            else:
+                st.warning(f"Missing file: {filename}")
+
+
+def highlight_model_rows(row):
+    """Add distinct colours to the baseline and best-model rows."""
+    if row["Model"] == "Logistic Regression (Baseline)":
+        style = "background-color: #E7F0FF; color: #102A43; font-weight: 600;"
+        return [style] * len(row)
+    if row["Model"] == "Random Forest (Best)":
+        style = "background-color: #E4F6EA; color: #173B24; font-weight: 600;"
+        return [style] * len(row)
+    return [""] * len(row)
+
+
+tab_scorer, tab_model_evaluation, tab_eda = st.tabs([
+    "Risk Scorer",
+    "Model Evaluation",
+    "EDA",
+])
 
 # ----------------------------------------------------------------------
 # TAB 1: Risk Scorer
 # ----------------------------------------------------------------------
 with tab_scorer:
     st.subheader("1. Choose a model")
-    
+
     selected_model_name = st.radio(
         "Model used to score this customer",
-        options=AVAILABLE_MODELS,
-        index=AVAILABLE_MODELS.index(BEST_MODEL_NAME),
-        horizontal=True,  
+        options=ORDERED_MODELS,
+        index=0,
+        horizontal=True,
+        format_func=format_model_name,
         help="All 4 models from the notebook (Part 5) are bundled in trained_models.pkl. "
-             "Random Forest was selected as the notebook's best model, but you can compare "
-             "predictions from any of them here.",
+             "Random Forest is the best model, while Logistic Regression is the baseline model.",
     )
-    
-    model = bundle["models"][selected_model_name]
-    metrics = bundle["results"].loc[selected_model_name]
 
-    is_best = selected_model_name == BEST_MODEL_NAME
-    badge = " (notebook's best model)" if is_best else " (not the notebook's best model)"
-    st.info(f"Model in use: **{selected_model_name}**{badge}  |  Test F1 = {metrics['F1']:.3f}  |  "
-            f"Recall = {metrics['Recall']:.3f}  |  ROC-AUC = {metrics['ROC-AUC']:.3f}")
+    model = bundle["models"][selected_model_name]
 
     st.subheader("2. Customer profile")
     c1, c2 = st.columns(2)
@@ -110,28 +258,37 @@ with tab_scorer:
     if st.button("Score this customer", type="primary", use_container_width=True):
         row = pd.DataFrame([raw])
 
-        # Rebuild the engineered features exactly as in Part 2 of the notebook
-        row["tenure_group"] = pd.cut(row["tenure"], bins=[-1, 12, 24, 48, 72],
-                                     labels=["0-12m", "13-24m", "25-48m", "49-72m"])
+        # Rebuild the engineered features exactly as in Part 2 of the notebook.
+        row["tenure_group"] = pd.cut(
+            row["tenure"],
+            bins=[-1, 12, 24, 48, 72],
+            labels=["0-12m", "13-24m", "25-48m", "49-72m"],
+        )
         row["num_services"] = (row[bundle["service_cols"]] == "Yes").sum(axis=1)
 
         for c in bundle["binary_cols"]:
             row[c] = row[c].map({"No": 0, "Yes": 1, "Female": 0, "Male": 1})
-        row = pd.get_dummies(row, columns=bundle["nominal_cols"], drop_first=False, dtype=int)
+        row = pd.get_dummies(
+            row,
+            columns=bundle["nominal_cols"],
+            drop_first=False,
+            dtype=int,
+        )
 
-        # Align to the exact training columns (missing dummies -> 0, extras dropped)
+        # Align to the exact training columns (missing dummies -> 0, extras dropped).
         row = row.reindex(columns=FEATURES, fill_value=0).astype(float)
 
-        # Only Logistic Regression was trained on scaled numeric features -
-        # scale here only if the currently selected model needs it.
+        # Only Logistic Regression was trained on scaled numeric features.
         if selected_model_name in bundle["needs_scaling"]:
-            row[bundle["numeric_cols"]] = bundle["scaler"].transform(row[bundle["numeric_cols"]])
+            row[bundle["numeric_cols"]] = bundle["scaler"].transform(
+                row[bundle["numeric_cols"]]
+            )
 
         proba = float(model.predict_proba(row)[0, 1])
         pred = int(model.predict(row)[0])
 
         st.subheader("4. Result")
-        st.caption(f"Prediction generated using **{selected_model_name}**")
+        st.caption(f"Prediction generated using **{format_model_name(selected_model_name)}**")
         st.metric("Churn probability", f"{proba:.1%}")
         st.progress(min(proba, 1.0))
 
@@ -161,112 +318,73 @@ with tab_scorer:
         peers = df[(df["Contract"] == contract) & (df["InternetService"] == internet)]
         if len(peers) > 0:
             actual = (peers["Churn"] == "Yes").mean()
-            st.caption(f"Historical benchmark: {len(peers):,} customers in the data share this "
-                       f"contract + internet combination, and {actual:.1%} of them churned.")
+            st.caption(
+                f"Historical benchmark: {len(peers):,} customers in the data share this "
+                f"contract + internet combination, and {actual:.1%} of them churned."
+            )
 
     st.divider()
     st.caption(
         "Academic prototype trained on 7,043 historical customer records. It outputs a churn "
         "RISK SCORE for retention triage, not a prediction about an individual's intentions. "
         "The associations shown are correlational, not causal, and the model must be retrained "
-        "as customer behaviour and tariffs change. Not for real commercial or financial decisions.")
+        "as customer behaviour and tariffs change. Not for real commercial or financial decisions."
+    )
 
 # ----------------------------------------------------------------------
-# TAB 2: EDA & Model Report (all 20 figures)
+# TAB 2: Model Evaluation
 # ----------------------------------------------------------------------
-with tab_report:
-    st.caption("All charts produced during the CRISP-DM analysis (Parts 1-6 of the notebook)")
+with tab_model_evaluation:
+    st.caption("Performance comparison and diagnostic charts for all four trained models")
 
-    # Each entry is (filename, image caption, presentation note).
-    # The presentation note is the short "talking point" line shown below the
-    # image so it's easier to explain the figure out loud during presentation.
-    EDA_FIGS = [
-        ("fig0_preparation_validation.png", "Data preparation & validation checks",
-         "Confirms the dataset is clean before modelling: no duplicate rows, correct data types, "
-         "and missing values limited to the expected zero-tenure TotalCharges cases."),
-        ("fig1_churn_pie.png", "Overall customer churn distribution",
-         "About 1 in 4 customers (~26.5%) churned, so the target is imbalanced - this is why "
-         "Recall and F1 matter more than plain Accuracy for this problem."),
-        ("fig2_mosaic_categorical.png", "Categorical feature relationships (mosaic plot)",
-         "The churn share (colour) clearly shifts across contract type and internet service tiles, "
-         "flagging both as strong categorical predictors."),
-        ("fig3_cramers_v_lollipop.png", "Association strength of categorical features (Cramer's V)",
-         "Contract, OnlineSecurity, TechSupport and InternetService rank highest, making them the "
-         "categorical features worth highlighting first in the presentation."),
-        ("fig4_numeric_violin.png", "Distribution of numeric features by churn status",
-         "Churners cluster at low tenure and higher MonthlyCharges, while retained customers spread "
-         "across much longer tenures."),
-        ("fig5_ecdf.png", "Empirical cumulative distribution functions",
-         "The ECDF curves for churners sit further left on tenure and further right on "
-         "MonthlyCharges, backing up the pattern seen in the violin plots with cumulative evidence."),
-        ("fig6_interaction_heatmap.png", "Feature interaction heatmap",
-         "Risk compounds when features combine: month-to-month contract plus fiber optic internet "
-         "is the single riskiest combination in the heatmap."),
-        ("fig7_num_services_dual_axis.png", "Number of subscribed services vs churn rate",
-         "Churn rate drops steadily as customers add more services, even though most customers sit "
-         "at the low end of the service count."),
-        ("fig8_scatter_matrix.png", "Scatter matrix of numeric features",
-         "Numeric features alone only partly separate churners from non-churners, which is why the "
-         "categorical and engineered features are still needed for the model."),
-    ]
+    results_path = APP_DIR / "model_comparison_results.csv"
+    if results_path.exists():
+        st.subheader("Metrics table")
+        results_df = pd.read_csv(results_path, index_col=0)
 
-    CORR_FIGS = [
-        ("fig9a_correlation_full.png", "Full correlation matrix (all features)",
-         "Highlights expected collinearity (e.g. TotalCharges with tenure) that was considered "
-         "during feature engineering."),
-        ("fig9b_correlation_top15.png", "Top 15 correlated features",
-         "Contract- and tenure-related engineered features dominate the top 15 correlations with "
-         "churn."),
-        ("fig9c_correlation_ranked.png", "Features ranked by correlation with churn",
-         "Two-year contracts and long tenure correlate negatively with churn, while fiber optic and "
-         "month-to-month correlate positively - two ends of the same story."),
-    ]
+        results_df = results_df.rename(index={
+            "Logistic Regression": "Logistic Regression (Baseline)",
+            "Random Forest": "Random Forest (Best)",
+        })
 
-    MODEL_FIGS = [
-        ("fig11_roc_curves.png", "ROC curves for all models",
-         "All four models clear the diagonal comfortably; Random Forest and XGBoost post the "
-         "highest AUC, meaning they rank churners vs non-churners best."),
-        ("fig12_confusion_matrices.png", "Confusion matrices for all models",
-         "Decision Tree and XGBoost catch slightly more true churners (higher recall) but at the "
-         "cost of more false alarms compared to Random Forest."),
-        ("fig13_cv_stability.png", "Cross-validation stability across folds",
-         "Random Forest and XGBoost show tight, consistent scores across folds, indicating the "
-         "results generalise rather than depending on one lucky data split."),
-        ("fig14_overfitting_check.png", "Train vs test performance (overfitting check)",
-         "The train-test gap stays small for Random Forest, suggesting limited overfitting compared "
-         "to the wider gap on the Decision Tree."),
-    ]
+        display_results = results_df.reset_index()
+        display_results = display_results.rename(columns={display_results.columns[0]: "Model"})
+        styled_results = display_results.style.apply(highlight_model_rows, axis=1).format(precision=3)
 
-    IMPORTANCE_FIGS = [
-        ("fig15_feature_importance.png", "Feature importance (best model)",
-         "Contract, tenure and TotalCharges carry the most weight when the Random Forest splits "
-         "churners from non-churners."),
-        ("fig16_correlation_vs_importance.png", "Correlation vs model-based feature importance",
-         "Model-based importance mostly agrees with the raw correlation ranking, which is a good "
-         "sanity check that the model is picking up genuine signal rather than noise."),
-        ("fig17_permutation_importance.png", "Permutation importance",
-         "Permutation importance confirms Contract and tenure as the features whose removal hurts "
-         "predictive performance the most."),
-    ]
+        st.dataframe(
+            styled_results,
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.warning("Missing file: model_comparison_results.csv")
 
-    def show_gallery(fig_list, columns=2):
-        """Render figures in a responsive grid, skipping/flagging any that are missing
-        instead of letting one bad path crash the whole tab. Each image gets a small
-        note underneath (a short talking point) to make presenting the report easier."""
-        cols = st.columns(columns)
-        for i, (filename, caption, note) in enumerate(fig_list):
-            path = APP_DIR / filename
-            with cols[i % columns]:
-                if path.exists():
-                    st.image(str(path), caption=caption, use_container_width=True)
-                    st.caption(note)
-                else:
-                    st.warning(f"Missing file: {filename}")
+    # The overall comparison is full-width directly below the metrics table.
+    fig10_path = APP_DIR / "fig10_model_comparison.png"
+    if fig10_path.exists():
+        st.image(
+            str(fig10_path),
+            caption="Comparison of all four models",
+            use_container_width=True,
+        )
+        st.caption(
+            "Random Forest and XGBoost lead on F1 and ROC-AUC; Random Forest is the "
+            "notebook's deployed default for its balance of precision and recall."
+        )
+    else:
+        st.warning("Missing file: fig10_model_comparison.png")
 
-    sub1, sub2, sub3, sub4 = st.tabs([
+    show_gallery(MODEL_FIGS)
+
+# ----------------------------------------------------------------------
+# TAB 3: EDA
+# ----------------------------------------------------------------------
+with tab_eda:
+    st.caption("Exploratory analysis, correlation analysis and feature-importance charts")
+
+    sub1, sub2, sub3 = st.tabs([
         "Exploratory Data Analysis",
         "Correlation Analysis",
-        "Model Evaluation",
         "Feature Importance",
     ])
 
@@ -277,30 +395,4 @@ with tab_report:
         show_gallery(CORR_FIGS)
 
     with sub3:
-        results_path = APP_DIR / "model_comparison_results.csv"
-        if results_path.exists():
-            st.subheader("Metrics table")
-           # Load the results dataframe
-            results_df = pd.read_csv(results_path, index_col=0)
-            
-            # Rename the Logistic Regression index to indicate it's the baseline
-            if "Logistic Regression" in results_df.index:
-                results_df = results_df.rename(index={"Logistic Regression": "Logistic Regression (base line)"})
-                
-            st.dataframe(results_df, use_container_width=True)
-
-        # fig10 (overall model comparison) is shown full-width, right below the
-        # metrics table, so it matches the table's width instead of being squeezed
-        # into the 2-column grid with the rest of the model evaluation figures.
-        fig10_path = APP_DIR / "fig10_model_comparison.png"
-        if fig10_path.exists():
-            st.image(str(fig10_path), caption="Comparison of all four models", use_container_width=True)
-            st.caption("Random Forest and XGBoost lead on F1 and ROC-AUC; Random Forest is the "
-                       "notebook's deployed default for its balance of precision and recall.")
-        else:
-            st.warning("Missing file: fig10_model_comparison.png")
-
-        show_gallery(MODEL_FIGS)
-
-    with sub4:
         show_gallery(IMPORTANCE_FIGS)
