@@ -414,123 +414,123 @@ with tab_scorer:
                         "internet": internet,
                     }
 
-        # --------------------------------------------------------------
+               # --------------------------------------------------------------
         # RIGHT: result (gauge chart on top, risk-factor detail below)
         # --------------------------------------------------------------
         with right:
-        with st.container(border=True):
-        st.markdown("### Prediction Result")
-        result = st.session_state.get("result")
- 
-        if result:
-            st.caption(f"Model used: **{result['model_name']}**")
- 
-            # --- 1. GAUGE ---
-            pct = result["proba"] * 100
-            # Fixed: Thresholds now match the background step zones (60 and 30)
-            bar_color = "#DC2626" if pct >= 60 else ("#F59E0B" if pct >= 30 else "#16A34A")
-            
-            gauge = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=pct,
-                number={"suffix": "%", "font": {"size": 36}},
-                gauge={
-                    "axis": {"range": [0, 100], "ticksuffix": "%"},
-                    "bar": {"color": bar_color},
-                    "steps": [
-                        {"range": [0, 30], "color": "#DCFCE7"},
-                        {"range": [30, 60], "color": "#FEF3C7"},
-                        {"range": [60, 100], "color": "#FEE2E2"},
-                    ],
-                    "threshold": {
-                        "line": {"color": "#1F2430", "width": 3},
-                        "thickness": 0.85, 
-                        "value": BASELINE_CHURN * 100
-                    },
-                },
-            ))
-            # Fixed: Increased height & adjusted margins for better fit
-            gauge.update_layout(
-                height=260, 
-                margin=dict(l=20, r=20, t=30, b=20),
-                paper_bgcolor="rgba(0,0,0,0)"
-            )
-            st.plotly_chart(gauge, use_container_width=True, config={"displayModeBar": False})
-            
-            # Simplified caption
-            st.caption(f"Black line marks overall dataset baseline: **{BASELINE_CHURN:.1%}**")
- 
-            # --- 2. ALERT ---
-            if result["pred"] == 1:
-                st.warning("⚠️ **HIGH RISK** — Flag for retention contact.")
-            else:
-                st.success("✅ **LOW RISK** — No immediate retention action required.")
-            
-            st.divider()
- 
-            # --- 3. RISK FACTORS BAR CHART ---
-            flags = result["flags"]
-            if flags:
-                st.markdown("#### Key Profile Attributes")
-                st.caption("Historical churn rate for segments matching this customer's attributes:")
+            with st.container(border=True):
+                st.markdown("### Prediction Result")
+                result = st.session_state.get("result")
                 
-                rates = [result["factor_rates"][f] for f in flags]
-                # Fixed: Gray for below baseline, red for above. No more confusing green "risk" bars.
-                colors = ["#DC2626" if r > BASELINE_CHURN else "#94A3B8" for r in rates]
- 
-                max_rate_pct = max(rates + [BASELINE_CHURN]) * 100
-                axis_max = max_rate_pct * 1.25
- 
-                bar = go.Figure(go.Bar(
-                    x=[r * 100 for r in rates], 
-                    y=flags, 
-                    orientation="h",
-                    marker_color=colors,
-                    text=[f"{r:.1%}" for r in rates], 
-                    textposition="outside",
-                    cliponaxis=False,
-                    hovertemplate="%{y}<br>Historical churn rate: %{x:.1f}%<extra></extra>",
-                ))
+                if result:
+                    st.caption(f"Model used: **{result['model_name']}**")
                 
-                # Moved annotation to top left so it doesn't clash with outside labels on the right
-                bar.add_vline(
-                    x=BASELINE_CHURN * 100, 
-                    line_dash="dash", 
-                    line_color="#6B7280",
-                    annotation_text=f"Baseline ({BASELINE_CHURN:.1%})", 
-                    annotation_position="top left"
-                )
+                    # --- 1. GAUGE ---
+                    pct = result["proba"] * 100
+                    # Fixed: Thresholds now match the background step zones (60 and 30)
+                    bar_color = "#DC2626" if pct >= 60 else ("#F59E0B" if pct >= 30 else "#16A34A")
+                    
+                    gauge = go.Figure(go.Indicator(
+                        mode="gauge+number",
+                        value=pct,
+                        number={"suffix": "%", "font": {"size": 36}},
+                        gauge={
+                            "axis": {"range": [0, 100], "ticksuffix": "%"},
+                            "bar": {"color": bar_color},
+                            "steps": [
+                                {"range": [0, 30], "color": "#DCFCE7"},
+                                {"range": [30, 60], "color": "#FEF3C7"},
+                                {"range": [60, 100], "color": "#FEE2E2"},
+                            ],
+                            "threshold": {
+                                "line": {"color": "#1F2430", "width": 3},
+                                "thickness": 0.85, 
+                                "value": BASELINE_CHURN * 100
+                            },
+                        },
+                    ))
+                    # Fixed: Increased height & adjusted margins for better fit
+                    gauge.update_layout(
+                        height=260, 
+                        margin=dict(l=20, r=20, t=30, b=20),
+                        paper_bgcolor="rgba(0,0,0,0)"
+                    )
+                    st.plotly_chart(gauge, use_container_width=True, config={"displayModeBar": False})
+                    
+                    # Simplified caption
+                    st.caption(f"Black line marks overall dataset baseline: **{BASELINE_CHURN:.1%}**")
                 
-                # Fixed: Better height formula and margins
-                bar.update_layout(
-                    height=80 + 45 * len(flags), 
-                    margin=dict(l=10, r=40, t=40, b=20),
-                    xaxis=dict(range=[0, axis_max], title="Historical Churn Rate (%)"),
-                    paper_bgcolor="rgba(0,0,0,0)", 
-                    plot_bgcolor="rgba(0,0,0,0)",
-                    yaxis=dict(autorange="reversed", tickfont=dict(size=12)),
-                )
-                st.plotly_chart(bar, use_container_width=True, config={"displayModeBar": False})
-            else:
-                st.info("No major risk factors from the top drivers identified in the EDA.")
- 
-            st.divider()
- 
-            # --- 4. PEER BENCHMARK ---
-            if result["peer_count"] > 0:
-                st.markdown("#### Peer Benchmark")
-                st.caption(f"Customers sharing the **{result['contract']}** contract and **{result['internet']}** internet combination.")
+                    # --- 2. ALERT ---
+                    if result["pred"] == 1:
+                        st.warning("⚠️ **HIGH RISK** — Flag for retention contact.")
+                    else:
+                        st.success("✅ **LOW RISK** — No immediate retention action required.")
+                    
+                    st.divider()
                 
-                # Fixed: Replaced wall of text with easily readable metrics
-                m1, m2 = st.columns(2)
-                m1.metric(label="Similar Customers", value=f"{result['peer_count']:,}")
-                m2.metric(label="Peer Churn Rate", value=f"{result['peer_rate']:.1%}")
+                    # --- 3. RISK FACTORS BAR CHART ---
+                    flags = result["flags"]
+                    if flags:
+                        st.markdown("#### Key Profile Attributes")
+                        st.caption("Historical churn rate for segments matching this customer's attributes:")
+                        
+                        rates = [result["factor_rates"][f] for f in flags]
+                        # Fixed: Gray for below baseline, red for above. No more confusing green "risk" bars.
+                        colors = ["#DC2626" if r > BASELINE_CHURN else "#94A3B8" for r in rates]
                 
-        else:
-            st.info(
-                "Fill in the customer profile on the left and click **Score this customer** "
-                "to see the risk result here."
-            )
+                        max_rate_pct = max(rates + [BASELINE_CHURN]) * 100
+                        axis_max = max_rate_pct * 1.25
+                
+                        bar = go.Figure(go.Bar(
+                            x=[r * 100 for r in rates], 
+                            y=flags, 
+                            orientation="h",
+                            marker_color=colors,
+                            text=[f"{r:.1%}" for r in rates], 
+                            textposition="outside",
+                            cliponaxis=False,
+                            hovertemplate="%{y}<br>Historical churn rate: %{x:.1f}%<extra></extra>",
+                        ))
+                        
+                        # Moved annotation to top left so it doesn't clash with outside labels on the right
+                        bar.add_vline(
+                            x=BASELINE_CHURN * 100, 
+                            line_dash="dash", 
+                            line_color="#6B7280",
+                            annotation_text=f"Baseline ({BASELINE_CHURN:.1%})", 
+                            annotation_position="top left"
+                        )
+                        
+                        # Fixed: Better height formula and margins
+                        bar.update_layout(
+                            height=80 + 45 * len(flags), 
+                            margin=dict(l=10, r=40, t=40, b=20),
+                            xaxis=dict(range=[0, axis_max], title="Historical Churn Rate (%)"),
+                            paper_bgcolor="rgba(0,0,0,0)", 
+                            plot_bgcolor="rgba(0,0,0,0)",
+                            yaxis=dict(autorange="reversed", tickfont=dict(size=12)),
+                        )
+                        st.plotly_chart(bar, use_container_width=True, config={"displayModeBar": False})
+                    else:
+                        st.info("No major risk factors from the top drivers identified in the EDA.")
+                
+                    st.divider()
+                
+                    # --- 4. PEER BENCHMARK ---
+                    if result["peer_count"] > 0:
+                        st.markdown("#### Peer Benchmark")
+                        st.caption(f"Customers sharing the **{result['contract']}** contract and **{result['internet']}** internet combination.")
+                        
+                        # Fixed: Replaced wall of text with easily readable metrics
+                        m1, m2 = st.columns(2)
+                        m1.metric(label="Similar Customers", value=f"{result['peer_count']:,}")
+                        m2.metric(label="Peer Churn Rate", value=f"{result['peer_rate']:.1%}")
+                        
+                else:
+                    st.info(
+                        "Fill in the customer profile on the left and click **Score this customer** "
+                        "to see the risk result here."
+                    )
 
     st.divider()
     st.caption(
