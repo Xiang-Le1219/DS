@@ -54,80 +54,43 @@ ORDERED_MODELS = [DEFAULT_MODEL_NAME] + [
     model_name for model_name in AVAILABLE_MODELS if model_name != DEFAULT_MODEL_NAME
 ]
 
-# Style the model selector so all four cards fill the complete content width.
+# Make all four radio choices use equal width across the page.
 st.markdown(
     """
     <style>
-    /* Full-width four-card model selector. */
-    div.st-key-model_selector {
+    div[data-testid="stRadio"] div[role="radiogroup"] {
+        display: flex;
         width: 100%;
+        gap: 0.75rem;
     }
 
-    div.st-key-model_selector div[data-testid="stHorizontalBlock"] {
-        width: 100% !important;
-        display: flex !important;
-        align-items: stretch !important;
-        gap: 1.25rem !important;
+    div[data-testid="stRadio"] div[role="radiogroup"] > label {
+        flex: 1 1 0;
+        justify-content: center;
+        margin: 0;
+        padding: 0.7rem 0.5rem;
+        border: 1px solid rgba(128, 128, 128, 0.35);
+        border-radius: 0.5rem;
     }
 
-    div.st-key-model_selector div[data-testid="stColumn"] {
-        flex: 1 1 0 !important;
-        width: 0 !important;
-        min-width: 0 !important;
+    div[data-testid="stRadio"] div[role="radiogroup"] > label p {
+        text-align: center;
+        white-space: normal;
     }
 
-    div.st-key-model_selector div[data-testid="stButton"] {
-        width: 100% !important;
-        height: 100% !important;
-    }
-
-    div.st-key-model_selector button {
-        width: 100% !important;
-        min-height: 5.5rem !important;
-        height: 100% !important;
-        padding: 0.9rem 0.75rem !important;
-        border-radius: 0.75rem !important;
-        white-space: normal !important;
-        line-height: 1.3 !important;
-        font-weight: 600 !important;
-    }
-
-    div.st-key-model_selector button p {
-        width: 100% !important;
-        margin: 0 !important;
-        text-align: center !important;
-        white-space: normal !important;
-        overflow-wrap: anywhere !important;
-    }
-
-    /* Stack neatly on smaller screens without affecting desktop width. */
     @media (max-width: 900px) {
-        div.st-key-model_selector div[data-testid="stHorizontalBlock"] {
-            flex-wrap: wrap !important;
+        div[data-testid="stRadio"] div[role="radiogroup"] {
+            flex-wrap: wrap;
         }
 
-        div.st-key-model_selector div[data-testid="stColumn"] {
-            flex: 1 1 calc(50% - 0.625rem) !important;
-            width: calc(50% - 0.625rem) !important;
-        }
-    }
-
-    @media (max-width: 560px) {
-        div.st-key-model_selector div[data-testid="stColumn"] {
-            flex-basis: 100% !important;
-            width: 100% !important;
+        div[data-testid="stRadio"] div[role="radiogroup"] > label {
+            flex-basis: calc(50% - 0.375rem);
         }
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
-
-
-def select_model(model_name):
-    """Store the selected model so the highlighted choice persists after reruns."""
-    st.session_state["selected_model_name"] = model_name
-
 
 # Each entry is (filename, image caption, presentation note).
 EDA_FIGS = [
@@ -236,30 +199,16 @@ tab_scorer, tab_model_evaluation, tab_eda = st.tabs([
 with tab_scorer:
     st.subheader("1. Choose a model")
 
-    st.caption("Model used to score this customer")
+    selected_model_name = st.radio(
+        "Model used to score this customer",
+        options=ORDERED_MODELS,
+        index=0,
+        horizontal=True,
+        format_func=format_model_name,
+        help="All 4 models from the notebook (Part 5) are bundled in trained_models.pkl. "
+             "Random Forest is the best model, while Logistic Regression is the baseline model.",
+    )
 
-    # Initialise the default once, then keep the user's latest choice in session state.
-    if st.session_state.get("selected_model_name") not in ORDERED_MODELS:
-        st.session_state["selected_model_name"] = DEFAULT_MODEL_NAME
-
-    # Use a keyed full-width container so the four model cards have equal widths,
-    # equal gaps, and span from the left edge to the right edge of the page content.
-    with st.container(key="model_selector"):
-        model_columns = st.columns([1, 1, 1, 1], gap="large")
-        for index, (column, model_name) in enumerate(zip(model_columns, ORDERED_MODELS)):
-            is_selected = st.session_state["selected_model_name"] == model_name
-            with column:
-                st.button(
-                    format_model_name(model_name),
-                    key=f"model_choice_{index}",
-                    type="primary" if is_selected else "secondary",
-                    use_container_width=True,
-                    on_click=select_model,
-                    args=(model_name,),
-                    help=f"Use {format_model_name(model_name)} to calculate the churn risk.",
-                )
-
-    selected_model_name = st.session_state["selected_model_name"]
     model = bundle["models"][selected_model_name]
 
     st.subheader("2. Customer profile")
@@ -394,8 +343,8 @@ with tab_model_evaluation:
         results_df = pd.read_csv(results_path, index_col=0)
 
         results_df = results_df.rename(index={
-            "Logistic Regression": "Logistic Regression (Baseline Model)",
-            "Random Forest": "Random Forest (Best Model)",
+            "Logistic Regression": "Logistic Regression (Baseline)",
+            "Random Forest": "Random Forest (Best)",
         })
 
         display_results = results_df.reset_index()
