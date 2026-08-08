@@ -475,9 +475,10 @@ with tab_scorer:
                         rates = [result["factor_rates"][f] for f in flags]
                         colors = ["#DC2626" if r > BASELINE_CHURN else "#16A34A" for r in rates]
 
-                        # Give the axis enough headroom so the outside data labels
-                        # (e.g. "47.4%") never get clipped at the right edge, and so
-                        # the baseline annotation has clear space to sit in.
+                        # Fixed top margin (in pixels, not a fraction) so the baseline
+                        # label always gets the same dedicated space up top, whether
+                        # there's 1 risk factor or 5 - it never has to fight the bars
+                        # for room the way the old inline annotation did.
                         max_rate_pct = max(rates + [BASELINE_CHURN]) * 100
                         axis_max = max_rate_pct * 1.3
 
@@ -488,11 +489,18 @@ with tab_scorer:
                             cliponaxis=False,
                             hovertemplate="%{y}<br>Historical churn rate: %{x:.1f}%<extra></extra>",
                         ))
-                        bar.add_vline(x=BASELINE_CHURN * 100, line_dash="dash", line_color="#6B7280",
-                                      annotation_text=f"Overall baseline {BASELINE_CHURN:.1%}",
-                                      annotation_position="top right")
+                        bar.add_vline(x=BASELINE_CHURN * 100, line_dash="dash", line_color="#6B7280")
+                        bar.add_annotation(
+                            x=BASELINE_CHURN * 100, y=flags[0], xref="x", yref="y",
+                            text=f"Overall baseline {BASELINE_CHURN:.1%}",
+                            showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=1.5,
+                            arrowcolor="#6B7280", ax=0, ay=-42,
+                            xanchor="center", yanchor="bottom",
+                            font=dict(size=11, color="#6B7280"),
+                            bgcolor="rgba(255,255,255,0.85)",
+                        )
                         bar.update_layout(
-                            height=70 + 55 * len(flags), margin=dict(l=10, r=30, t=35, b=30),
+                            height=95 + 55 * len(flags), margin=dict(l=10, r=30, t=60, b=30),
                             xaxis=dict(range=[0, axis_max]),
                             xaxis_title="Historical churn rate for this segment (%)",
                             paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
