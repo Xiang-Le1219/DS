@@ -165,6 +165,21 @@ st.markdown(
         padding: 0.25rem 0.4rem !important;
         gap: 0.9rem !important;
     }
+
+    /* Gauge chart - center it and cap its width so it stays a clean,
+       well-proportioned semicircle instead of stretching edge-to-edge
+       across the result panel, and trim Streamlit's default spacing
+       above/below the chart element. */
+    div.st-key-gauge_chart div[data-testid="stVerticalBlock"] {
+        display: flex;
+        justify-content: center;
+    }
+
+    div.st-key-gauge_chart div[data-testid="stElementContainer"] {
+        max-width: 380px;
+        width: 100% !important;
+        margin: 0 auto !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -461,7 +476,8 @@ with tab_scorer:
                     ))
                     gauge.update_layout(height=230, margin=dict(l=25, r=25, t=15, b=10),
                                          paper_bgcolor="rgba(0,0,0,0)")
-                    st.plotly_chart(gauge, width="stretch", config={"displayModeBar": False})
+                    with st.container(key="gauge_chart"):
+                        st.plotly_chart(gauge, width="stretch", config={"displayModeBar": False})
                     st.caption(f"Black line marks the overall baseline churn rate ({BASELINE_CHURN:.1%}).")
 
                     if result["pred"] == 1:
