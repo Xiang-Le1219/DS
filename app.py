@@ -166,17 +166,17 @@ st.markdown(
         gap: 0.9rem !important;
     }
 
-    /* Risk meter (horizontal bullet chart) - cap its width so it reads
-       as a clean compact bar instead of stretching edge-to-edge across
-       the result panel, and trim Streamlit's default spacing above/below
-       the chart element. */
+    /* Gauge chart - center it and cap its width so it stays a clean,
+       well-proportioned semicircle instead of stretching edge-to-edge
+       across the result panel, and trim Streamlit's default spacing
+       above/below the chart element. */
     div.st-key-gauge_chart div[data-testid="stVerticalBlock"] {
         display: flex;
         justify-content: center;
     }
 
     div.st-key-gauge_chart div[data-testid="stElementContainer"] {
-        max-width: 460px;
+        max-width: 380px;
         width: 100% !important;
         margin: 0 auto !important;
     }
@@ -455,83 +455,30 @@ with tab_scorer:
 
                     pct = result["proba"] * 100
                     bar_color = "#DC2626" if pct >= 50 else ("#F59E0B" if pct >= 30 else "#16A34A")
-
-                    # Horizontal bullet-style risk meter - an alternative
-                    # pattern to the semicircular gauge. The coloured track
-                    # shows the green / amber / red risk zones, the bold bar
-                    # shows this customer's predicted churn risk, and the
-                    # dashed vertical line marks the overall baseline churn
-                    # rate so the user can see how this customer compares to
-                    # the average.
-                    bullet = go.Figure()
-
-                    # 1) Risk-zone track (green / amber / red background bands).
-                    bullet.add_trace(go.Bar(
-                        x=[30, 30, 40],
-                        y=["Risk", "Risk", "Risk"],
-                        base=[0, 30, 60],
-                        orientation="h",
-                        marker=dict(color=["#DCFCE7", "#FEF3C7", "#FEE2E2"]),
-                        width=0.55,
-                        showlegend=False,
-                        hoverinfo="skip",
+                    gauge = go.Figure(go.Indicator(
+                        mode="gauge+number",
+                        value=pct,
+                        number={"suffix": "%", "font": {"size": 38}},
+                        gauge={
+                            "axis": {"range": [0, 100], "ticksuffix": "%"},
+                            "bar": {"color": bar_color},
+                            "steps": [
+                                {"range": [0, 30], "color": "#DCFCE7"},
+                                {"range": [30, 60], "color": "#FEF3C7"},
+                                {"range": [60, 100], "color": "#FEE2E2"},
+                            ],
+                            # Threshold marks the overall baseline churn rate (not this
+                            # customer's own score, which is already the big number) so
+                            # it's a reference point for how this customer compares.
+                            "threshold": {"line": {"color": "#1F2430", "width": 3},
+                                           "thickness": 0.85, "value": BASELINE_CHURN * 100},
+                        },
                     ))
-
-                    # 2) Predicted risk score - bold bar laid on top of the track.
-                    bullet.add_trace(go.Bar(
-                        x=[pct],
-                        y=["Risk"],
-                        base=[0],
-                        orientation="h",
-                        marker=dict(color=bar_color),
-                        width=0.25,
-                        text=[f"<b>{pct:.1f}%</b>"],
-                        textposition="outside",
-                        textfont=dict(size=20, color=bar_color),
-                        showlegend=False,
-                        hovertemplate="Predicted churn risk: %{x:.1f}%<extra></extra>",
-                    ))
-
-                    # 3) Baseline churn rate - dashed vertical reference line + label.
-                    bullet.add_vline(
-                        x=BASELINE_CHURN * 100,
-                        line_dash="dash",
-                        line_color="#1F2430",
-                        line_width=2,
-                    )
-                    bullet.add_annotation(
-                        x=BASELINE_CHURN * 100, y=1.15,
-                        xref="x", yref="paper",
-                        text=f"Baseline {BASELINE_CHURN:.1%}",
-                        showarrow=False,
-                        xanchor="center", yanchor="bottom",
-                        font=dict(size=11, color="#1F2430"),
-                        bgcolor="rgba(255,255,255,0.9)",
-                        bordercolor="#1F2430", borderwidth=1, borderpad=3,
-                    )
-
-                    bullet.update_layout(
-                        height=210,
-                        margin=dict(l=10, r=60, t=30, b=30),
-                        xaxis=dict(
-                            range=[0, 108],
-                            showgrid=False,
-                            ticksuffix="%",
-                            tickvals=[0, 30, 60, 100],
-                            tickfont=dict(size=11),
-                        ),
-                        yaxis=dict(
-                            showgrid=False,
-                            showticklabels=False,
-                            range=[-0.5, 0.5],
-                        ),
-                        paper_bgcolor="rgba(0,0,0,0)",
-                        plot_bgcolor="rgba(0,0,0,0)",
-                        bargap=0.2,
-                    )
+                    gauge.update_layout(height=230, margin=dict(l=25, r=25, t=15, b=10),
+                                         paper_bgcolor="rgba(0,0,0,0)")
                     with st.container(key="gauge_chart"):
-                        st.plotly_chart(bullet, width="stretch", config={"displayModeBar": False})
-                    st.caption(f"Dashed line marks the overall baseline churn rate ({BASELINE_CHURN:.1%}).")
+                        st.plotly_chart(gauge, width="stretch", config={"displayModeBar": False})
+                    st.caption(f"Black line marks the overall baseline churn rate ({BASELINE_CHURN:.1%}).")
 
                     if result["pred"] == 1:
                         st.error("**HIGH RISK - flag for retention contact.**")
