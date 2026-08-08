@@ -86,6 +86,16 @@ def render_speedometer(pct, bar_color, baseline_pct):
                                 facecolor=color, edgecolor="white", linewidth=1.5)
         ax.add_patch(wedge)
 
+    # Value-fill arc: a saturated, bar_color-tinted overlay from 0% up to the
+    # predicted value, drawn on top of the pale zone bands - this is the same
+    # "how far does it reach" shading the old Plotly gauge showed via its
+    # `bar` property, kept here alongside the needle rather than instead of it.
+    if pct > 0:
+        fill_theta_lo = 180 - (min(pct, 100) / 100) * 180
+        fill_wedge = mpatches.Wedge((0, 0), r_outer, fill_theta_lo, 180, width=r_outer - r_inner,
+                                     facecolor=bar_color, edgecolor="none", zorder=2)
+        ax.add_patch(fill_wedge)
+
     # Tick labels at the zone boundaries.
     for v in [0, 30, 60, 100]:
         ang = np.radians(180 - (v / 100) * 180)
