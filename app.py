@@ -5,6 +5,10 @@ Run locally:  streamlit run streamlit_app.py
 """
 from pathlib import Path
 
+import matplotlib
+matplotlib.use("Agg")  # headless backend - no GUI/display available in Streamlit
+import matplotlib.patches as mpatches
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pickle
@@ -56,6 +60,66 @@ def compute_factor_rates(_df):
 
 
 FACTOR_RATES = compute_factor_rates(df)
+
+
+def render_speedometer(pct, bar_color, baseline_pct):
+    """Build a genuine speedometer-style gauge: a semicircular green/amber/red
+    dial with a needle pointing at the predicted churn risk, plus a short dark
+    tick marking the overall baseline churn rate for comparison.
+
+    Plotly's own gauge (go.Indicator) can only show the value as a filled arc
+    or a number - it has no real rotating needle - so this is drawn with
+    Matplotlib instead, which supports rotating pointer needles directly.
+    """
+    zones = [(0, 30, "#DCFCE7"), (30, 60, "#FEF3C7"), (60, 100, "#FEE2E2")]
+    r_outer, r_inner = 1.0, 0.72
+
+    fig, ax = plt.subplots(figsize=(5.2, 3.4), dpi=150)
+
+    # Colour-zone ring (green / amber / red), each drawn as a donut wedge.
+    # Angle convention: value 0% -> 180 deg (left), value 100% -> 0 deg (right),
+    # sweeping over the top - the usual speedometer layout.
+    for lo, hi, color in zones:
+        theta_lo = 180 - (lo / 100) * 180
+        theta_hi = 180 - (hi / 100) * 180
+        wedge = mpatches.Wedge((0, 0), r_outer, theta_hi, theta_lo, width=r_outer - r_inner,
+                                facecolor=color, edgecolor="white", linewidth=1.5)
+        ax.add_patch(wedge)
+
+    # Tick labels at the zone boundaries.
+    for v in [0, 30, 60, 100]:
+        ang = np.radians(180 - (v / 100) * 180)
+        ax.text(1.14 * np.cos(ang), 1.14 * np.sin(ang), f"{v}%",
+                 ha="center", va="center", fontsize=9, color="#4B5563")
+
+    # Baseline reference: a short dark tick just outside the ring.
+    base_ang = np.radians(180 - (baseline_pct / 100) * 180)
+    ax.plot([r_outer * np.cos(base_ang), 1.08 * np.cos(base_ang)],
+             [r_outer * np.sin(base_ang), 1.08 * np.sin(base_ang)],
+             color="#1F2430", linewidth=2.5, solid_capstyle="round")
+
+    # Needle - a slim kite/triangle pivoting at the hub, pointing at pct.
+    needle_ang = np.radians(180 - (pct / 100) * 180)
+    tip = (r_inner * 0.98 * np.cos(needle_ang), r_inner * 0.98 * np.sin(needle_ang))
+    base_l = (0.09 * np.cos(needle_ang + np.pi / 2), 0.09 * np.sin(needle_ang + np.pi / 2))
+    base_r = (0.09 * np.cos(needle_ang - np.pi / 2), 0.09 * np.sin(needle_ang - np.pi / 2))
+    ax.add_patch(mpatches.Polygon([base_l, tip, base_r], closed=True,
+                                   facecolor="#1F2430", edgecolor="#1F2430", zorder=5))
+    ax.add_patch(mpatches.Circle((0, 0), 0.09, facecolor="#1F2430", edgecolor="white",
+                                  linewidth=1.5, zorder=6))
+
+    # Value readout, colour-matched to the risk zone.
+    ax.text(0, -0.32, f"{pct:.1f}%", ha="center", va="center",
+             fontsize=22, fontweight="bold", color=bar_color)
+
+    ax.set_xlim(-1.3, 1.3)
+    ax.set_ylim(-0.45, 1.3)
+    ax.set_aspect("equal")
+    ax.axis("off")
+    fig.patch.set_alpha(0.0)
+    fig.tight_layout()
+    return fig
+
 
 # The pickle bundle stores every trained model, not just the winner, so the
 # user can pick any of them at runtime instead of always using Random Forest.
@@ -166,10 +230,10 @@ st.markdown(
         gap: 0.9rem !important;
     }
 
-    /* Gauge chart - center it and cap its width so it stays a clean,
-       well-proportioned semicircle instead of stretching edge-to-edge
-       across the result panel, and trim Streamlit's default spacing
-       above/below the chart element. */
+    /* Speedometer gauge (Matplotlib image) - center it and cap its width so
+       it stays a clean, well-proportioned semicircle instead of stretching
+       edge-to-edge across the result panel, and trim Streamlit's default
+       spacing above/below the image element. */
     div.st-key-gauge_chart div[data-testid="stVerticalBlock"] {
         display: flex;
         justify-content: center;
@@ -455,30 +519,11 @@ with tab_scorer:
 
                     pct = result["proba"] * 100
                     bar_color = "#DC2626" if pct >= 50 else ("#F59E0B" if pct >= 30 else "#16A34A")
-                    gauge = go.Figure(go.Indicator(
-                        mode="gauge+number",
-                        value=pct,
-                        number={"suffix": "%", "font": {"size": 38}},
-                        gauge={
-                            "axis": {"range": [0, 100], "ticksuffix": "%"},
-                            "bar": {"color": bar_color},
-                            "steps": [
-                                {"range": [0, 30], "color": "#DCFCE7"},
-                                {"range": [30, 60], "color": "#FEF3C7"},
-                                {"range": [60, 100], "color": "#FEE2E2"},
-                            ],
-                            # Threshold marks the overall baseline churn rate (not this
-                            # customer's own score, which is already the big number) so
-                            # it's a reference point for how this customer compares.
-                            "threshold": {"line": {"color": "#1F2430", "width": 3},
-                                           "thickness": 0.85, "value": BASELINE_CHURN * 100},
-                        },
-                    ))
-                    gauge.update_layout(height=230, margin=dict(l=25, r=25, t=15, b=10),
-                                         paper_bgcolor="rgba(0,0,0,0)")
+                    gauge_fig = render_speedometer(pct, bar_color, BASELINE_CHURN * 100)
                     with st.container(key="gauge_chart"):
-                        st.plotly_chart(gauge, width="stretch", config={"displayModeBar": False})
-                    st.caption(f"Black line marks the overall baseline churn rate ({BASELINE_CHURN:.1%}).")
+                        st.pyplot(gauge_fig, use_container_width=True)
+                    plt.close(gauge_fig)
+                    st.caption(f"Dark tick marks the overall baseline churn rate ({BASELINE_CHURN:.1%}).")
 
                     if result["pred"] == 1:
                         st.error("**HIGH RISK - flag for retention contact.**")
