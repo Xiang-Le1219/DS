@@ -528,7 +528,7 @@ with tab_scorer:
                     st.caption(f"Prediction generated using **{result['model_name']}**")
 
                     pct = result["proba"] * 100
-                    bar_color = "#DC2626" if pct >= 50 else ("#F59E0B" if pct >= 30 else "#16A34A")
+                    bar_color = "#DC2626" if pct >= 60 else ("#F59E0B" if pct >= 30 else "#16A34A")
                     gauge_fig = render_speedometer(pct, bar_color, BASELINE_CHURN * 100)
                     with st.container(key="gauge_chart"):
                         st.pyplot(gauge_fig, use_container_width=True)
@@ -562,13 +562,13 @@ with tab_scorer:
                         ))
                         bar.add_vline(x=BASELINE_CHURN * 100, line_dash="dash", line_color="#6B7280")
                         bar.add_annotation(
-                            x=BASELINE_CHURN * 100, y=flags[0], xref="x", yref="y",
+                            x=BASELINE_CHURN * 100, y=1, xref="x", yref="paper",
                             text=f"Overall baseline {BASELINE_CHURN:.1%}",
                             showarrow=True, arrowhead=2, arrowsize=1, arrowwidth=1.5,
-                            arrowcolor="#6B7280", ax=0, ay=-42,
+                            arrowcolor="#6B7280", ax=0, ay=-30,
                             xanchor="center", yanchor="bottom",
                             font=dict(size=11, color="#6B7280"),
-                            bgcolor="rgba(255,255,255,0.85)",
+                            bgcolor="rgba(255,255,255,0.85)",  
                         )
                         bar.update_layout(
                             height=95 + 55 * len(flags), margin=dict(l=10, r=30, t=60, b=30),
