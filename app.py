@@ -71,7 +71,7 @@ def render_speedometer(pct, bar_color, baseline_pct):
     or a number - it has no real rotating needle - so this is drawn with
     Matplotlib instead, which supports rotating pointer needles directly.
     """
-    zones = [(0, 33.3, "#DCFCE7"), (33.3, 66.6, "#FEF3C7"), (66.6, 100, "#FEE2E2")]
+    zones = [(0, 33.3, "#DCFCE7"), (33.3, 66.6, "#FEF3C7"), (66.6, 100, "#DBEAFE")]
     r_outer, r_inner = 1.0, 0.72
 
     fig, ax = plt.subplots(figsize=(5.2, 3.4), dpi=150)
@@ -245,7 +245,6 @@ st.markdown(
        on the left. Targeted via its container key, same pattern as above. */
     div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
         border-radius: 1rem !important;
-        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
     }
 
     div.st-key-result_panel div[data-testid="stVerticalBlock"] {
@@ -541,23 +540,25 @@ with tab_scorer:
                     st.caption(f"Prediction generated using **{result['model_name']}**")
 
                     pct = result["proba"] * 100
-                    bar_color = "#DC2626" if pct >= 66.6 else ("#F59E0B" if pct >= 33.3 else "#16A34A")
+                    bar_color = "#023E8A" if pct >= 66.6 else ("#F59E0B" if pct >= 33.3 else "#16A34A")
                     gauge_fig = render_speedometer(pct, bar_color, BASELINE_CHURN * 100)
                     with st.container(key="gauge_chart"):
                         st.pyplot(gauge_fig, use_container_width=True)
                     plt.close(gauge_fig)
                     st.caption(f"Dark tick marks the overall baseline churn rate ({BASELINE_CHURN:.1%}).")
 
-                    if result["pred"] == 1:
+                    if pct >= 66.6:
                         st.error("**HIGH RISK - flag for retention contact.**")
+                    elif pct >= 33.3:
+                        st.warning("**MEDIUM RISK - monitor customer closely.**")
                     else:
                         st.success("**LOW RISK - no retention action required.**")
-
                     flags = result["flags"]
+                    
                     if flags:
                         st.markdown("**Risk factors present in this profile** (from the notebook's EDA):")
                         rates = [result["factor_rates"][f] for f in flags]
-                        colors = ["#DC2626" if r > BASELINE_CHURN else "#16A34A" for r in rates]
+                        colors = ["#023E8A" if r > BASELINE_CHURN else "#16A34A" for r in rates]
 
                         # Fixed top margin (in pixels, not a fraction) so the baseline
                         # label always gets the same dedicated space up top, whether
