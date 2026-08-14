@@ -219,6 +219,14 @@ st.markdown(
             width: 100% !important;
         }
     }
+    
+    /* Forcefully remove the default 1px border on ALL bordered containers */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border: none !important;
+        border-color: transparent !important;
+        border-width: 0px !important;
+        background-clip: padding-box !important;
+    }
 
     /* Tighten the gap between the Customer profile and Result columns.
        Targeted via a container key (stable, set by us) rather than Streamlit's
