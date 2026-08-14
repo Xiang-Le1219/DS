@@ -220,11 +220,18 @@ st.markdown(
         }
     }
 
-    /* Tighten the gap between the Customer profile and Result columns.
-       Targeted via a container key (stable, set by us) rather than Streamlit's
-       auto-generated emotion-cache class names, which change between versions
-       and aren't safe to hardcode. */
-        div.st-key-scorer_row div[data-testid="stHorizontalBlock"] {
+    /* ========================================================== */
+    /* FORCEFULLY REMOVE DEFAULT 1PX BORDER ON ALL CONTAINERS     */
+    /* ========================================================== */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border: none !important;
+        border-color: transparent !important;
+        border-width: 0px !important;
+        background-clip: padding-box !important;
+    }
+
+    /* Tighten the gap between the Customer profile and Result columns. */
+    div.st-key-scorer_row div[data-testid="stHorizontalBlock"] {
         gap: 1.25rem !important;
         align-items: stretch !important;
     }
@@ -243,12 +250,13 @@ st.markdown(
 
     /* "3. Result" panel only - give it a bit more breathing room and a soft
        shadow so it reads as the outcome card, distinct from the input cards
-       on the left. Targeted via its container key, same pattern as above. */
+       on the left. */
     div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
         border: none !important;
         border-color: transparent !important;
         border-width: 0px !important;
         background-clip: padding-box !important;
+        box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
     }
 
     div.st-key-result_panel div[data-testid="stVerticalBlock"] {
@@ -256,10 +264,7 @@ st.markdown(
         gap: 0.9rem !important;
     }
 
-    /* Speedometer gauge (Matplotlib image) - center it and cap its width so
-       it stays a clean, well-proportioned semicircle instead of stretching
-       edge-to-edge across the result panel, and trim Streamlit's default
-       spacing above/below the image element. */
+    /* Speedometer gauge (Matplotlib image) - center it and cap its width */
     div.st-key-gauge_chart div[data-testid="stVerticalBlock"] {
         display: flex;
         justify-content: center;
