@@ -270,6 +270,22 @@ st.markdown(
         width: 100% !important;
         margin: 0 auto !important;
     }
+    div[data-testid="stAlertContentError"] {
+        background-color: rgba(2, 62, 138, 0.1) !important; 
+        border-left: 0.5rem solid #023E8A !important;      
+    }
+    div[data-testid="stAlertContentError"] p,
+    div[data-testid="stAlertContentError"] svg,
+    div[data-testid="stAlertContentError"] [data-testid="stAlertIcon"] {
+        color: #023E8A !important;
+    }
+    div[data-testid="stAlertContentError"] [data-testid="stAlertIcon"] {
+        background-color: #023E8A !important;
+    }
+    div[data-testid="stAlertContentError"] [data-testid="stAlertIcon"] svg {
+        color: white !important;
+        fill: white !important;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -562,7 +578,7 @@ with tab_scorer:
                     if flags:
                         st.markdown("**Risk factors present in this profile** (from the notebook's EDA):")
                         rates = [result["factor_rates"][f] for f in flags]
-                        colors = ["#DC2626" if r > BASELINE_CHURN else "#16A34A" for r in rates]
+                        colors = ["#ff4b4b" if r > BASELINE_CHURN else "#16A34A" for r in rates]
 
                         # Fixed top margin (in pixels, not a fraction) so the baseline
                         # label always gets the same dedicated space up top, whether
