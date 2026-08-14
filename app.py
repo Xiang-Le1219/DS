@@ -88,7 +88,7 @@ def render_speedometer(pct, bar_color, baseline_pct):
         ax.add_patch(wedge)
 
     # Draw crisp black separator lines only at the zone boundaries
-    for v in [0, 33.3, 66.6, 100]:
+    for v in [33.3, 66.6]:
         ang = np.radians(180 - (v / 100) * 180)
         ax.plot([r_inner * np.cos(ang), r_outer * np.cos(ang)],
                 [r_inner * np.sin(ang), r_outer * np.sin(ang)],
