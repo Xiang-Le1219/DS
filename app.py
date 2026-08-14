@@ -71,7 +71,7 @@ def render_speedometer(pct, bar_color, baseline_pct):
     or a number - it has no real rotating needle - so this is drawn with
     Matplotlib instead, which supports rotating pointer needles directly.
     """
-    zones = [(0, 33.3, "#DCFCE7"), (33.3, 66.6, "#FEF3C7"), (66.6, 100, "#DBEAFE")]
+    zones = [(0, 33.3, "#DCFCE7"), (33.3, 66.6, "#FEF3C7"), (66.6, 100, "#FEE2E2")]
     r_outer, r_inner = 1.0, 0.72
 
     fig, ax = plt.subplots(figsize=(5.2, 3.4), dpi=150)
@@ -244,7 +244,7 @@ st.markdown(
        shadow so it reads as the outcome card, distinct from the input cards
        on the left. Targeted via its container key, same pattern as above. */
     div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
-        border-radius: 1rem !important;
+        border: none !important;
     }
 
     div.st-key-result_panel div[data-testid="stVerticalBlock"] {
@@ -540,7 +540,7 @@ with tab_scorer:
                     st.caption(f"Prediction generated using **{result['model_name']}**")
 
                     pct = result["proba"] * 100
-                    bar_color = "#023E8A" if pct >= 66.6 else ("#F59E0B" if pct >= 33.3 else "#16A34A")
+                    bar_color = "#DC2626" if pct >= 66.6 else ("#F59E0B" if pct >= 33.3 else "#16A34A")
                     gauge_fig = render_speedometer(pct, bar_color, BASELINE_CHURN * 100)
                     with st.container(key="gauge_chart"):
                         st.pyplot(gauge_fig, use_container_width=True)
@@ -558,7 +558,7 @@ with tab_scorer:
                     if flags:
                         st.markdown("**Risk factors present in this profile** (from the notebook's EDA):")
                         rates = [result["factor_rates"][f] for f in flags]
-                        colors = ["#023E8A" if r > BASELINE_CHURN else "#16A34A" for r in rates]
+                        colors = ["#DC2626" if r > BASELINE_CHURN else "#16A34A" for r in rates]
 
                         # Fixed top margin (in pixels, not a fraction) so the baseline
                         # label always gets the same dedicated space up top, whether
