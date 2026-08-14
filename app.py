@@ -270,22 +270,6 @@ st.markdown(
         width: 100% !important;
         margin: 0 auto !important;
     }
-    div[data-testid="stAlertContentError"] {
-        background-color: rgba(2, 62, 138, 0.1) !important; 
-        border-left: 0.5rem solid #023E8A !important;      
-    }
-    div[data-testid="stAlertContentError"] p,
-    div[data-testid="stAlertContentError"] svg,
-    div[data-testid="stAlertContentError"] [data-testid="stAlertIcon"] {
-        color: #023E8A !important;
-    }
-    div[data-testid="stAlertContentError"] [data-testid="stAlertIcon"] {
-        background-color: #023E8A !important;
-    }
-    div[data-testid="stAlertContentError"] [data-testid="stAlertIcon"] svg {
-        color: white !important;
-        fill: white !important;
-    }
     </style>
     """,
     unsafe_allow_html=True,
