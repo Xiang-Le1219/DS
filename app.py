@@ -621,7 +621,7 @@ with tab_scorer:
                     if flags:
                         st.markdown("**Risk factors present in this profile** (from the notebook's EDA):")
                         rates = [result["factor_rates"][f] for f in flags]
-                        colors = ["#DC2626" if r > BASELINE_CHURN else "#16A34A" for r in rates]
+                        colors = "rgb(2, 62, 138)"
 
                         # Fixed top margin (in pixels, not a fraction) so the baseline
                         # label always gets the same dedicated space up top, whether
