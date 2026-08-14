@@ -225,10 +225,7 @@ st.markdown(
     /* ========================================================== */
     [data-testid="stVerticalBlockBorderWrapper"],
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        border: 0px !important;
-        border-style: none !important;
-        border-color: transparent !important;
-        border-width: 0px !important;
+        border: 1px solid rgba(49, 51, 63, 0) !important;
     }
 
     /* Tighten the gap between the Customer profile and Result columns. */
