@@ -221,14 +221,14 @@ st.markdown(
     }
 
     /* ========================================================== */
-    /* FORCEFULLY KILL THE DEFAULT 1PX BORDER ON ALL OUR PANELS   */
+    /* FORCEFULLY REMOVE THE 1PX BORDER ON ALL CONTAINERS         */
     /* ========================================================== */
-    div.st-key-model_panel > div,
-    div.st-key-profile_panel > div,
-    div.st-key-result_panel > div {
-        border: none !important;
-        border-width: 0px !important;
+    [data-testid="stVerticalBlockBorderWrapper"],
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border: 0px !important;
+        border-style: none !important;
         border-color: transparent !important;
+        border-width: 0px !important;
     }
 
     /* Tighten the gap between the Customer profile and Result columns. */
@@ -250,7 +250,7 @@ st.markdown(
     }
 
     /* "3. Result" panel only - give it a soft shadow so it still stands out */
-    div.st-key-result_panel > div {
+    div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
         box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
     }
 
