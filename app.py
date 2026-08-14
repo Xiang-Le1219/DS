@@ -179,6 +179,19 @@ st.markdown(
         border-color: rgb(3, 75, 160) !important;
     }
 
+    /* Secondary buttons (unselected model cards) default to a gray border -
+       tint it blue so it matches the theme instead of standing out as gray. */
+    .stButton > button[kind="secondary"],
+    button[data-testid="stBaseButton-secondary"] {
+        border-color: rgba(2, 62, 138, 0.35) !important;
+        color: rgb(2, 62, 138) !important;
+    }
+    .stButton > button[kind="secondary"]:hover,
+    button[data-testid="stBaseButton-secondary"]:hover {
+        border-color: rgb(2, 62, 138) !important;
+        color: rgb(2, 62, 138) !important;
+    }
+
     /* Sliders */
     .stSlider div[data-baseweb="slider"] div[role="slider"] {
         background-color: rgb(2, 62, 138) !important;
@@ -267,9 +280,8 @@ st.markdown(
 
     /* ========================================================== */
     /* FORCEFULLY REMOVE THE 1PX BORDER ON ALL CONTAINERS         */
-    /* Streamlit draws this border as a box-shadow ring, not a    */
-    /* real `border`, so overriding `border` alone never worked - */
-    /* box-shadow must be killed too.                             */
+    /* Streamlit draws this as a box-shadow ring, not a real       */
+    /* `border` - overriding `border` alone does nothing.          */
     /* ========================================================== */
     [data-testid="stVerticalBlockBorderWrapper"],
     div[data-testid="stVerticalBlockBorderWrapper"] {
