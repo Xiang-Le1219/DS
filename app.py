@@ -71,7 +71,7 @@ def render_speedometer(pct, bar_color, baseline_pct):
     or a number - it has no real rotating needle - so this is drawn with
     Matplotlib instead, which supports rotating pointer needles directly.
     """
-    zones = [(0, 30, "#DCFCE7"), (30, 60, "#FEF3C7"), (60, 100, "#FEE2E2")]
+    zones = [(0, 33.3, "#DCFCE7"), (33.3, 66.6, "#FEF3C7"), (66.6, 100, "#FEE2E2")]
     r_outer, r_inner = 1.0, 0.72
 
     fig, ax = plt.subplots(figsize=(5.2, 3.4), dpi=150)
@@ -97,7 +97,7 @@ def render_speedometer(pct, bar_color, baseline_pct):
         ax.add_patch(fill_wedge)
 
     # Tick labels at the zone boundaries.
-    for v in [0, 30, 60, 100]:
+    for v in [0, 33, 66, 100]:
         ang = np.radians(180 - (v / 100) * 180)
         ax.text(1.14 * np.cos(ang), 1.14 * np.sin(ang), f"{v}%",
                  ha="center", va="center", fontsize=9, color="#4B5563")
@@ -122,8 +122,8 @@ def render_speedometer(pct, bar_color, baseline_pct):
     ax.text(0, -0.32, f"{pct:.1f}%", ha="center", va="center",
              fontsize=22, fontweight="bold", color=bar_color)
 
-    ax.set_xlim(-1.3, 1.3)
-    ax.set_ylim(-0.45, 1.3)
+    ax.set_xlim(-1.25, 1.25)
+    ax.set_ylim(-0.5, 1.25)
     ax.set_aspect("equal")
     ax.axis("off")
     fig.patch.set_alpha(0.0)
@@ -223,8 +223,21 @@ st.markdown(
        Targeted via a container key (stable, set by us) rather than Streamlit's
        auto-generated emotion-cache class names, which change between versions
        and aren't safe to hardcode. */
-    div.st-key-scorer_row div[data-testid="stHorizontalBlock"] {
+        div.st-key-scorer_row div[data-testid="stHorizontalBlock"] {
         gap: 1.25rem !important;
+        align-items: stretch !important;
+    }
+
+    /* Force the columns to stretch to the same height */
+    div.st-key-scorer_row div[data-testid="stColumn"] {
+        display: flex !important;
+        flex-direction: column !important;
+    }
+
+    /* Force the bordered container inside the column to fill the column's height */
+    div.st-key-scorer_row div[data-testid="stColumn"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+        flex: 1 1 auto !important;
+        height: 100% !important;
     }
 
     /* "3. Result" panel only - give it a bit more breathing room and a soft
@@ -405,7 +418,7 @@ with tab_scorer:
     # ROW 2: Customer profile (left) | Result (right)
     # ------------------------------------------------------------------
     with st.container(key="scorer_row"):
-        left, right = st.columns([1, 1.2], gap="medium")
+        left, right = st.columns([1, 1], gap="medium")
 
         with left:
             with st.container(border=True):
@@ -528,7 +541,7 @@ with tab_scorer:
                     st.caption(f"Prediction generated using **{result['model_name']}**")
 
                     pct = result["proba"] * 100
-                    bar_color = "#DC2626" if pct >= 60 else ("#F59E0B" if pct >= 30 else "#16A34A")
+                    bar_color = "#DC2626" if pct >= 66.6 else ("#F59E0B" if pct >= 33.3 else "#16A34A")
                     gauge_fig = render_speedometer(pct, bar_color, BASELINE_CHURN * 100)
                     with st.container(key="gauge_chart"):
                         st.pyplot(gauge_fig, use_container_width=True)
