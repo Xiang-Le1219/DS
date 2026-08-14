@@ -167,7 +167,6 @@ st.markdown(
     """
     <style>
 
-    /* Primary Buttons */
     .stButton > button[kind="primary"],
     button[data-testid="stBaseButton-primary"] {
         background-color: rgb(2, 62, 138) !important;
@@ -180,7 +179,7 @@ st.markdown(
         border-color: rgb(3, 75, 160) !important;
     }
 
-    /* Sliders (Thumb and Track) */
+    /* Sliders */
     .stSlider div[data-baseweb="slider"] div[role="slider"] {
         background-color: rgb(2, 62, 138) !important;
     }
@@ -188,62 +187,21 @@ st.markdown(
         background-color: rgb(2, 62, 138) !important;
     }
 
-    /* Checkboxes */
+    /* Checkboxes and Toggles */
     .stCheckbox div[role="checkbox"] > div {
-        border-color: rgb(2, 62, 138) !important;
-    }
-    .stCheckbox div[role="checkbox"][aria-checked="true"] > div {
-        background-color: rgb(2, 62, 138) !important;
         border-color: rgb(2, 62, 138) !important;
     }
     .stCheckbox div[role="checkbox"][aria-checked="true"] > svg {
         fill: rgb(2, 62, 138) !important;
     }
 
-    /* Toggles */
-    .stToggle div[role="switch"][aria-checked="true"] > div:first-child {
-        background-color: rgb(2, 62, 138) !important;
-        border-color: rgb(2, 62, 138) !important;
-    }
-
-    /* Selectboxes, Multiselects, Radios (Active/Hover items) */
-    .stSelectbox div[data-baseweb="select"] > div > div {
-        border-color: rgb(2, 62, 138) !important;
-    }
-    div[data-baseweb="select"] ul li[data-baseweb="select"].is-selected,
-    div[role="listbox"] li[aria-selected="true"] {
-        color: rgb(2, 62, 138) !important;
-        font-weight: 700 !important;
-    }
-    div[role="listbox"] li[aria-selected="true"] span {
-        border-color: rgb(2, 62, 138) !important;
-    }
-    
-    /* Number Input Arrows */
-    .stNumberInput button {
-        color: rgb(2, 62, 138) !important;
-        border-color: rgb(2, 62, 138) !important;
-    }
-    .stNumberInput button:hover {
-        background-color: rgba(2, 62, 138, 0.1) !important;
-    }
-
     /* Active Tabs */
     .stTabs button[aria-selected="true"] {
         border-bottom-color: rgb(2, 62, 138) !important;
+        color: rgb(2, 62, 138) !important;
     }
     .stTabs button[aria-selected="true"] p {
         color: rgb(2, 62, 138) !important;
-    }
-
-    /* Focus Rings (Outlines when clicking inputs) */
-    .stSelectbox [data-baseweb="select"]:focus-within,
-    .stMultiSelect [data-baseweb="select"]:focus-within,
-    .stNumberInput input:focus,
-    .stTextInput input:focus,
-    .stTextArea textarea:focus {
-        border-color: rgb(2, 62, 138) !important;
-        box-shadow: 0 0 0 1px rgb(2, 62, 138) !important;
     }
     
     /* Full-width four-card model selector, spanning the whole page content. */
