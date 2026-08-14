@@ -246,6 +246,9 @@ st.markdown(
        on the left. Targeted via its container key, same pattern as above. */
     div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
         border: none !important;
+        border-color: transparent !important;
+        border-width: 0px !important;
+        background-clip: padding-box !important;
     }
 
     div.st-key-result_panel div[data-testid="stVerticalBlock"] {
