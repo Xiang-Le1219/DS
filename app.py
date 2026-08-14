@@ -267,10 +267,14 @@ st.markdown(
 
     /* ========================================================== */
     /* FORCEFULLY REMOVE THE 1PX BORDER ON ALL CONTAINERS         */
+    /* Streamlit draws this border as a box-shadow ring, not a    */
+    /* real `border`, so overriding `border` alone never worked - */
+    /* box-shadow must be killed too.                             */
     /* ========================================================== */
     [data-testid="stVerticalBlockBorderWrapper"],
     div[data-testid="stVerticalBlockBorderWrapper"] {
-        border: 1px solid rgba(49, 51, 63, 0) !important;
+        border: none !important;
+        box-shadow: none !important;
     }
 
     /* Tighten the gap between the Customer profile and Result columns. */
