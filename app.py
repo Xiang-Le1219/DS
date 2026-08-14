@@ -84,8 +84,15 @@ def render_speedometer(pct, bar_color, baseline_pct):
         theta_lo = 180 - (lo / 100) * 180
         theta_hi = 180 - (hi / 100) * 180
         wedge = mpatches.Wedge((0, 0), r_outer, theta_hi, theta_lo, width=r_outer - r_inner,
-                                facecolor=color, edgecolor="black", linewidth=2.0)
+                                facecolor=color, edgecolor="none", linewidth=0)
         ax.add_patch(wedge)
+
+    # Draw crisp black separator lines only at the zone boundaries
+    for v in [0, 33.3, 66.6, 100]:
+        ang = np.radians(180 - (v / 100) * 180)
+        ax.plot([r_inner * np.cos(ang), r_outer * np.cos(ang)],
+                [r_inner * np.sin(ang), r_outer * np.sin(ang)],
+                color="black", linewidth=2.0, zorder=4)
 
     # Value-fill arc: a saturated, bar_color-tinted overlay from 0% up to the
     # predicted value, drawn on top of the pale zone bands - this is the same
