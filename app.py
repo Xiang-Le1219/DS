@@ -221,13 +221,14 @@ st.markdown(
     }
 
     /* ========================================================== */
-    /* FORCEFULLY REMOVE DEFAULT 1PX BORDER ON ALL CONTAINERS     */
+    /* FORCEFULLY KILL THE DEFAULT 1PX BORDER ON ALL OUR PANELS   */
     /* ========================================================== */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
+    div.st-key-model_panel > div,
+    div.st-key-profile_panel > div,
+    div.st-key-result_panel > div {
         border: none !important;
-        border-color: transparent !important;
         border-width: 0px !important;
-        background-clip: padding-box !important;
+        border-color: transparent !important;
     }
 
     /* Tighten the gap between the Customer profile and Result columns. */
@@ -248,14 +249,8 @@ st.markdown(
         height: 100% !important;
     }
 
-    /* "3. Result" panel only - give it a bit more breathing room and a soft
-       shadow so it reads as the outcome card, distinct from the input cards
-       on the left. */
-    div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
-        border: none !important;
-        border-color: transparent !important;
-        border-width: 0px !important;
-        background-clip: padding-box !important;
+    /* "3. Result" panel only - give it a soft shadow so it still stands out */
+    div.st-key-result_panel > div {
         box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
     }
 
@@ -395,7 +390,7 @@ with tab_scorer:
     # ------------------------------------------------------------------
     # ROW 1: model choice - full page width, no scrolling needed to reach it
     # ------------------------------------------------------------------
-    with st.container(border=True):
+    with st.container(border=True, key="model_panel"):
         st.markdown("#### 1. Choose a model")
         st.caption("Model used to score this customer")
 
@@ -429,7 +424,7 @@ with tab_scorer:
         left, right = st.columns([1, 1], gap="medium")
 
         with left:
-            with st.container(border=True):
+            with st.container(border=True, key="profile_panel"):
                 st.markdown("#### 2. Customer profile")
                 c1, c2 = st.columns(2)
                 with c1:
