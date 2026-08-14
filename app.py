@@ -280,13 +280,13 @@ st.markdown(
 
     /* ========================================================== */
     /* FORCEFULLY REMOVE THE 1PX BORDER ON ALL CONTAINERS         */
-    /* Streamlit draws this as a box-shadow ring, not a real       */
-    /* `border` - overriding `border` alone does nothing.          */
+    /* This Streamlit version applies container border=True as a  */
+    /* real `border` on the stVerticalBlock/stHorizontalBlock flex */
+    /* div itself - there is no separate "BorderWrapper" testid.   */
     /* ========================================================== */
-    [data-testid="stVerticalBlockBorderWrapper"],
-    div[data-testid="stVerticalBlockBorderWrapper"] {
+    [data-testid="stVerticalBlock"],
+    [data-testid="stHorizontalBlock"] {
         border: none !important;
-        box-shadow: none !important;
     }
 
     /* Tighten the gap between the Customer profile and Result columns. */
@@ -302,14 +302,15 @@ st.markdown(
     }
 
     /* Force the bordered container inside the column to fill the column's height */
-    div.st-key-scorer_row div[data-testid="stColumn"] > div[data-testid="stVerticalBlockBorderWrapper"] {
+    div.st-key-scorer_row div[data-testid="stColumn"] > div[data-testid="stVerticalBlock"] {
         flex: 1 1 auto !important;
         height: 100% !important;
     }
 
     /* "3. Result" panel only - give it a soft shadow so it still stands out */
-    div.st-key-result_panel div[data-testid="stVerticalBlockBorderWrapper"] {
+    div.st-key-result_panel div[data-testid="stVerticalBlock"] {
         box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08) !important;
+        border-radius: 0.75rem !important;
     }
 
     div.st-key-result_panel div[data-testid="stVerticalBlock"] {
