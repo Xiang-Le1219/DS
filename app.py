@@ -71,6 +71,7 @@ def render_speedometer(pct, bar_color, baseline_pct):
     or a number - it has no real rotating needle - so this is drawn with
     Matplotlib instead, which supports rotating pointer needles directly.
     """
+            
     zones = [(0, 33.3, "#DCFCE7"), (33.3, 66.6, "#FEF3C7"), (66.6, 100, "#FEE2E2")]
     r_outer, r_inner = 1.0, 0.72
 
@@ -83,7 +84,7 @@ def render_speedometer(pct, bar_color, baseline_pct):
         theta_lo = 180 - (lo / 100) * 180
         theta_hi = 180 - (hi / 100) * 180
         wedge = mpatches.Wedge((0, 0), r_outer, theta_hi, theta_lo, width=r_outer - r_inner,
-                                facecolor=color, edgecolor="white", linewidth=1.5)
+                                facecolor=color, edgecolor="black", linewidth=2.0)
         ax.add_patch(wedge)
 
     # Value-fill arc: a saturated, bar_color-tinted overlay from 0% up to the
