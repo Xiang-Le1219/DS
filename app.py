@@ -166,6 +166,44 @@ ORDERED_MODELS = [DEFAULT_MODEL_NAME] + [
 st.markdown(
     """
     <style>
+
+    .stButton > button[kind="primary"],
+    button[data-testid="stBaseButton-primary"] {
+        background-color: rgb(2, 62, 138) !important;
+        border-color: rgb(2, 62, 138) !important;
+        color: white !important;
+    }
+    .stButton > button[kind="primary"]:hover,
+    button[data-testid="stBaseButton-primary"]:hover {
+        background-color: rgb(3, 75, 160) !important;
+        border-color: rgb(3, 75, 160) !important;
+    }
+
+    /* Sliders */
+    .stSlider div[data-baseweb="slider"] div[role="slider"] {
+        background-color: rgb(2, 62, 138) !important;
+    }
+    .stSlider div[data-baseweb="slider"] div:nth-child(2) > div {
+        background-color: rgb(2, 62, 138) !important;
+    }
+
+    /* Checkboxes and Toggles */
+    .stCheckbox div[role="checkbox"] > div {
+        border-color: rgb(2, 62, 138) !important;
+    }
+    .stCheckbox div[role="checkbox"][aria-checked="true"] > svg {
+        fill: rgb(2, 62, 138) !important;
+    }
+
+    /* Active Tabs */
+    .stTabs button[aria-selected="true"] {
+        border-bottom-color: rgb(2, 62, 138) !important;
+        color: rgb(2, 62, 138) !important;
+    }
+    .stTabs button[aria-selected="true"] p {
+        color: rgb(2, 62, 138) !important;
+    }
+    
     /* Full-width four-card model selector, spanning the whole page content. */
     div.st-key-model_selector {
         width: 100%;
