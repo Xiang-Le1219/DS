@@ -658,10 +658,18 @@ def permutation_bar(model_name, top_n=15):
         x=data["Importance"], y=data["Feature"], orientation="h",
         error_x=dict(type="data", array=data["Std"], color=T.TEXT, thickness=1.2),
         marker=dict(color=T.PRIMARY),
-        text=[f"{v:.3f}" for v in data["Importance"]],
-        textposition="outside", textfont=dict(size=10), cliponaxis=False,
         hovertemplate="%{y}<br>ROC-AUC drop: %{x:.4f} (+/-%{error_x.array:.4f})<extra></extra>",
     ))
+
+    # place value labels past the tip of each error bar, not the bar itself
+    pad = (data["Importance"] + data["Std"]).max() * 0.02
+    fig.add_trace(go.Scatter(
+        x=data["Importance"] + data["Std"] + pad, y=data["Feature"],
+        mode="text", text=[f"{v:.3f}" for v in data["Importance"]],
+        textposition="middle right", textfont=dict(size=10, color=T.TEXT),
+        hoverinfo="skip", showlegend=False,
+    ))
+
     fig.update_xaxes(title="Drop in ROC-AUC when the feature is shuffled")
     return T.style(fig, height=max(380, 26 * len(data)), legend=False,
                    margin=dict(l=10, r=70, t=24, b=44))
