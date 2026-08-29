@@ -942,7 +942,7 @@ with tab_eda:
                    "Error bars show the spread over repeats.")
 
         st.subheader("Correlation vs learned importance")
-          show(C.correlation_vs_importance(imp_model, imp_n))
+        show(C.correlation_vs_importance(imp_model, imp_n))
         st.caption("A sanity check - when the model's ranking agrees with the raw "
                    "correlations, it is picking up genuine signal rather than noise. "
                    "The number in parentheses is how many ranks a feature moved "
