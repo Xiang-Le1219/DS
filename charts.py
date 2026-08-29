@@ -675,21 +675,32 @@ def correlation_vs_importance(model_name, top_n=20):
     correlations, it is picking up genuine signal rather than noise.
     """
     importance, label = A.builtin_importance(model_name)
-    corr = A.churn_correlations()
+    corr = A.churn_correlations().abs()          # match |Correlation| used in Figure 9
     merged = importance.head(top_n).copy()
     merged["Correlation"] = merged["Feature"].map(corr)
     merged = merged.dropna(subset=["Correlation"])
+
+    # rank shift, same as the notebook's "consistency" table
+    merged["Corr rank"] = merged["Correlation"].rank(ascending=False).astype(int)
+    merged["RF rank"] = merged["Importance"].abs().rank(ascending=False).astype(int)
+    merged["Rank shift"] = merged["Corr rank"] - merged["RF rank"]
+
+    def _tag(row):
+        shift = row["Rank shift"]
+        return f"{row['Feature']} ({'+' if shift > 0 else ''}{shift})" if shift != 0 else row["Feature"]
+
     fig = go.Figure(go.Scatter(
         x=merged["Correlation"], y=merged["Importance"], mode="markers+text",
-        text=merged["Feature"], textposition="top center",
+        text=merged.apply(_tag, axis=1), textposition="top center",
         textfont=dict(size=9, color=T.GRAY),
         marker=dict(size=12, color=merged["Importance"], colorscale=T.SEQUENTIAL,
                     line=dict(color=T.PRIMARY, width=1)),
-        hovertemplate="%{text}<br>Correlation: %{x:.3f}<br>" + label + ": %{y:.4f}<extra></extra>",
+        customdata=merged[["Corr rank", "RF rank", "Rank shift"]],
+        hovertemplate="%{text}<br>|Correlation|: %{x:.3f}<br>" + label + ": %{y:.4f}"
+                      "<br>Corr rank: %{customdata[0]} | RF rank: %{customdata[1]}"
+                      "<br>Rank shift: %{customdata[2]:+d}<extra></extra>",
     ))
-    fig.add_vline(x=0, line_color=T.GRAY, line_width=1, line_dash="dash")
-    fig.update_xaxes(title="Correlation with churn "
-                           "(left of 0 = lowers risk, right = raises it)")
+    fig.update_xaxes(title="|Correlation with churn|  (Figure 9)")
     fig.update_yaxes(title=label)
     return T.style(fig, height=480, legend=False)
 
