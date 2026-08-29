@@ -139,7 +139,7 @@ def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
     <script>
       (function() {{
         const finalPct = {pct};
-        const needleAngle = 180 - (finalPct / 100) * 180;
+        const needleAngle = (finalPct / 100) * 180 - 180;
         const fillOffset = {track_len:.2f} - {fill_len:.2f};
         const needle = document.getElementById("needleGroup");
         const arc = document.getElementById("fillArc");
