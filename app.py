@@ -566,7 +566,7 @@ with tab_scorer:
                                                        BASELINE_CHURN * 100)
                             gauge_slot.pyplot(frame, width="stretch")
                             plt.close(frame)
-                            time.sleep(0.12)
+                            time.sleep(0.16)
                     else:
                         static = render_speedometer(pct, bar_color,
                                                     BASELINE_CHURN * 100)
