@@ -700,7 +700,7 @@ def correlation_vs_importance(model_name, top_n=20):
                       "<br>Corr rank: %{customdata[0]} | RF rank: %{customdata[1]}"
                       "<br>Rank shift: %{customdata[2]:+d}<extra></extra>",
     ))
-    fig.update_xaxes(title="|Correlation with churn|  (Figure 9)")
+    fig.update_xaxes(title="Correlation with churn", rangemode="tozero")
     fig.update_yaxes(title=label)
     return T.style(fig, height=480, legend=False)
 
