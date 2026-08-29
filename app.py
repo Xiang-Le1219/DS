@@ -585,7 +585,7 @@ with tab_scorer:
                     k2.metric("Risk band", "-")
                     k3.metric("Similar customers", "-")
 
-                    with st.container(key="gauge_chart"):
+                with st.container(key="gauge_chart"):
                     st.components.v1.html(
                         render_speedometer_html(pct, bar_color, BASELINE_CHURN * 100,
                                                 animate=just_scored),
