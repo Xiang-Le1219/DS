@@ -42,8 +42,6 @@ def churn_donut():
         sort=False,
     ))
     rate = (df["Churn"] == "Yes").mean()
-    fig.add_annotation(text=f"<b>{rate:.1%}</b><br><span style='font-size:11px'>churn rate</span>",
-                       showarrow=False, font=dict(size=22, color=T.CHURN))
     return T.style(fig, height=340, legend=False)
 
 
