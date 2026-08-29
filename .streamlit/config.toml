@@ -1,0 +1,60 @@
+# ---------------------------------------------------------------------------
+# Single source of truth for the app's visual identity.
+#
+# app.py reads these values back with st.get_option(), so the Matplotlib gauge
+# and every Plotly chart stay in sync with the widgets automatically. Change a
+# colour here and it propagates through the whole app - no CSS edit needed.
+# ---------------------------------------------------------------------------
+[theme]
+base = "light"
+
+# --- Brand palette -------------------------------------------------------
+primaryColor = "#023E8A"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F5F6FA"
+textColor = "#1F2430"
+borderColor = "#E3E7F0"
+linkColor = "#0077B6"
+linkUnderline = false
+
+# --- Semantic colours ----------------------------------------------------
+# These drive st.success / st.warning / st.error AND the three risk bands,
+# so the callout box and the gauge needle can never disagree.
+greenColor = "#16A34A"
+yellowColor = "#F59E0B"
+redColor = "#DC2626"
+grayColor = "#6B7280"
+
+# --- Typography ----------------------------------------------------------
+font = "sans-serif"
+headingFont = "sans-serif"
+baseFontSize = 15
+metricValueFontSize = "2rem"   # NOTE: this option is a STRING (baseFontSize is an int)
+metricValueFontWeight = 700
+
+# --- Shape ---------------------------------------------------------------
+# Replaces the hand-written border-radius CSS on buttons and panels.
+baseRadius = "0.65rem"
+buttonRadius = "0.75rem"
+showWidgetBorder = true
+
+# --- Chart palettes ------------------------------------------------------
+# Inherited by st.plotly_chart(theme="streamlit") and the built-in charts,
+# so Phase 3's interactive charts are on-brand without per-chart styling.
+chartCategoricalColors = [
+  "#023E8A", "#00B4D8", "#F59E0B", "#16A34A", "#DC2626",
+  "#7C3AED", "#0F766E", "#EC4899", "#6B7280", "#84CC16",
+]
+chartSequentialColors = [
+  "#F0F9FF", "#CAF0F8", "#ADE8F4", "#90E0EF", "#48CAE4",
+  "#00B4D8", "#0096C7", "#0077B6", "#023E8A", "#03045E",
+]
+# Runs low -> high, i.e. negative correlation -> positive correlation.
+# Blue = lowers churn risk, red = raises it, matching Figure 9c in the report.
+chartDivergingColors = [
+  "#023E8A", "#2563EB", "#60A5FA", "#93C5FD", "#BFDBFE",
+  "#FECACA", "#FCA5A5", "#F87171", "#EF4444", "#DC2626",
+]
+
+[server]
+headless = true

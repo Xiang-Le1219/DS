@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------------------
+# Deployment pins for Streamlit Community Cloud (set Python 3.12 in the app's
+# Advanced settings). Verified 2026-08-28: this exact set installs cleanly,
+# loads trained_models.pkl without warnings, and runs app.py end to end.
+#
+# HARD CONSTRAINTS - do not relax these:
+#   scikit-learn 1.6.1 : the exact version that trained trained_models.pkl.
+#   xgboost      3.4.1 : 3.3.0 CANNOT read the saved booster - it raises
+#                        XGBoostError "input stream corrupted" on load.
+#                        3.1.3 / 3.2.0 / 3.4.1 all load it correctly.
+#   numpy        2.x   : the pickle stores numpy._core arrays; numpy 1.x
+#                        cannot unpickle them at all.
+#   pandas       2.x   : the pickle stores pandas 2.x DataFrame internals.
+#                        pandas 3.x is now the PyPI default - leaving this
+#                        unpinned is what would break the deployed app.
+# ---------------------------------------------------------------------------
+streamlit==1.62.0
+scikit-learn==1.6.1
+xgboost==3.4.1
+numpy==2.2.6
+pandas==2.3.3
+scipy==1.15.3
+matplotlib==3.10.9
+plotly==6.9.0
+imbalanced-learn==0.14.0
+
+# Notebook-only, NOT imported by app.py. Left out so Streamlit Cloud builds
+# stay small and fast; install these locally to run the .ipynb:
+#   seaborn  jupyter
