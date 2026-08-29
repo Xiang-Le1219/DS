@@ -941,9 +941,7 @@ with tab_eda:
                    "feature is randomly shuffled, with the value printed on each bar. "
                    "Error bars show the spread over repeats.")
 
-        st.subheader("Correlation vs learned importance")
-        show(C.correlation_vs_importance(imp_model, imp_n))
-        st.caption("A sanity check - when the model's ranking agrees with the raw "
-                   "correlations, it is picking up genuine signal rather than noise. "
-                   "Points left of the zero line have a negative correlation with churn "
-                   "(they lower risk, like long tenure); that is expected, not a problem.")
+       st.caption("A sanity check - when the model's ranking agrees with the raw "
+           "correlations, it is picking up genuine signal rather than noise. "
+           "The number in parentheses is how many ranks a feature moved "
+           "between the correlation ranking and the model's importance ranking.")
