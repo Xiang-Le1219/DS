@@ -129,6 +129,7 @@ def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
       <g id="needleGroup" style="transform-origin:{cx}px {cy}px;
                                   transform:rotate(0deg);
                                   transition: transform {duration}ms cubic-bezier(0.22,1,0.36,1);">
+        <polygon points="{cx},{cy-7} {cx-needle_len:.1f},{cy} {cx},{cy+7}" fill="{T.TEXT}"/>
       </g>
       <circle cx="{cx}" cy="{cy}" r="9" fill="{T.TEXT}" stroke="white" stroke-width="1.5"/>
       <text id="pctText" x="{cx}" y="{cy+55}" text-anchor="middle"
