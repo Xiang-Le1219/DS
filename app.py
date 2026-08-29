@@ -70,7 +70,7 @@ def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
     needle sweep, the fill arc and the percentage read-out can animate with
     real browser-native transitions - no per-frame server round trips.
     """
-    cx, cy, r_outer, r_inner = 150, 150, 130, 94
+    cx, cy, r_outer, r_inner = 160, 150, 120, 86
     zones = [
         (0, T.MEDIUM_RISK_AT, T.ZONE_TINTS["low"]),
         (T.MEDIUM_RISK_AT, T.HIGH_RISK_AT, T.ZONE_TINTS["medium"]),
@@ -98,7 +98,7 @@ def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
         for v in [T.MEDIUM_RISK_AT, T.HIGH_RISK_AT]
     )
     tick_labels = "".join(
-        f'<text x="{pt(v, r_outer + 20)[0]:.2f}" y="{pt(v, r_outer + 20)[1]:.2f}" '
+        f'<text x="{pt(v, r_outer + 18)[0]:.2f}" y="{pt(v, r_outer + 18)[1]:.2f}" '
         f'text-anchor="middle" dominant-baseline="middle" font-size="13" fill="{T.GRAY}">{v}%</text>'
         for v in [0, 33, 66, 100]
     )
@@ -117,7 +117,7 @@ def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
 
     html = f"""
     <div style="display:flex;justify-content:center;">
-    <svg viewBox="0 0 300 190" width="100%" style="max-width:420px;">
+    <svg viewBox="0 0 320 225" width="100%" style="max-width:420px;">
       {zone_paths}
       {boundary_lines}
       <path d="{fill_path}" fill="none" stroke="{bar_color}" stroke-width="{r_outer - r_inner:.0f}"
@@ -129,7 +129,7 @@ def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
       <g id="needleGroup" style="transform-origin:{cx}px {cy}px;
                                   transform:rotate(180deg);
                                   transition: transform {duration}ms cubic-bezier(0.22,1,0.36,1);">
-        <polygon points="{cx-7},{cy} {cx+needle_len},{cy} {cx+7},{cy}" fill="{T.TEXT}"/>
+        <polygon points="{cx},{cy-7} {cx+needle_len:.1f},{cy} {cx},{cy+7}" fill="{T.TEXT}"/>
       </g>
       <circle cx="{cx}" cy="{cy}" r="9" fill="{T.TEXT}" stroke="white" stroke-width="1.5"/>
       <text id="pctText" x="{cx}" y="{cy+55}" text-anchor="middle"
@@ -589,7 +589,7 @@ with tab_scorer:
                     st.components.v1.html(
                         render_speedometer_html(pct, bar_color, BASELINE_CHURN * 100,
                                                 animate=just_scored),
-                        height=250,
+                        height=280,
                     )
 
                 if result:
