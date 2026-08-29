@@ -35,7 +35,6 @@ def churn_donut():
     fig = go.Figure(go.Pie(
         labels=["Retained", "Churned"],
         values=[int(counts.get("No", 0)), int(counts.get("Yes", 0))],
-        hole=0.40,
         marker=dict(colors=[T.RETAIN, T.CHURN],
                     line=dict(color="white", width=2)),
         textinfo="label+percent", textfont=dict(size=13),
