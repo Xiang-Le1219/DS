@@ -188,14 +188,17 @@ def cramers_v_lollipop():
             hoverinfo="skip", showlegend=False,
         ))
     fig.add_trace(go.Scatter(
-        x=data["CramersV"], y=data["Feature"], mode="markers",
+        x=data["CramersV"], y=data["Feature"], mode="markers+text",
         marker=dict(size=12, color=data["CramersV"], colorscale=T.SEQUENTIAL,
                     line=dict(color=T.PRIMARY, width=1)),
+        text=[f"{v:.3f}" for v in data["CramersV"]],
+        textposition="middle right", textfont=dict(size=10, color=T.TEXT),
         hovertemplate="%{y}<br>Cramer's V: %{x:.3f}<extra></extra>",
         showlegend=False,
     ))
-    fig.update_xaxes(title="Cramer's V (association strength with churn)")
-    return T.style(fig, height=520, legend=False, margin=dict(l=10, r=30, t=24, b=44))
+    fig.update_xaxes(title="Cramer's V (association strength with churn)",
+                     range=[0, data["CramersV"].max() * 1.15])
+    return T.style(fig, height=520, legend=False, margin=dict(l=10, r=60, t=24, b=44))
 
 
 def numeric_violin(feature):
