@@ -8,11 +8,10 @@ Layout and interaction live here; the palette is in theme.py, the computations
 in analysis.py and the figures in charts.py. Every chart is generated live from
 the data and the trained models - the notebook's static PNG exports are gone.
 """
-import matplotlib
-matplotlib.use("Agg")  # headless backend - no GUI/display available in Streamlit
-import matplotlib.patches as mpatches
-import matplotlib.pyplot as plt
 import time
+
+import numpy as np
+import streamlit as st
 
 import numpy as np
 import streamlit as st
@@ -62,77 +61,110 @@ def compute_factor_rates(_df):
 FACTOR_RATES = compute_factor_rates(df)
 
 
-def render_speedometer(pct, bar_color, baseline_pct):
-    """A speedometer-style gauge: a semicircular green/amber/red dial with a
-    needle at the predicted churn risk, plus a short dark tick marking the
-    overall baseline churn rate.
+def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
+    """A speedometer-style gauge as inline SVG: a semicircular green/amber/red
+    dial with a needle at the predicted churn risk, plus a short dark tick
+    marking the overall baseline churn rate.
 
-    Drawn with Matplotlib rather than Plotly because Plotly's go.Indicator has
-    no real rotating needle - it can only show a filled arc or a number.
+    Built as SVG/CSS (via st.components.v1.html) rather than Matplotlib so the
+    needle sweep, the fill arc and the percentage read-out can animate with
+    real browser-native transitions - no per-frame server round trips.
     """
+    cx, cy, r_outer, r_inner = 150, 150, 130, 94
     zones = [
         (0, T.MEDIUM_RISK_AT, T.ZONE_TINTS["low"]),
         (T.MEDIUM_RISK_AT, T.HIGH_RISK_AT, T.ZONE_TINTS["medium"]),
         (T.HIGH_RISK_AT, 100, T.ZONE_TINTS["high"]),
     ]
-    r_outer, r_inner = 1.0, 0.72
 
-    fig, ax = plt.subplots(figsize=(5.2, 3.4), dpi=150)
+    def pt(pct_val, r):
+        ang = np.radians(180 - (pct_val / 100) * 180)
+        return cx + r * np.cos(ang), cy - r * np.sin(ang)
 
-    # Colour-zone ring, each drawn as a donut wedge. Angle convention:
-    # 0% -> 180 deg (left), 100% -> 0 deg (right), sweeping over the top.
-    for lo, hi, color in zones:
-        theta_lo = 180 - (lo / 100) * 180
-        theta_hi = 180 - (hi / 100) * 180
-        ax.add_patch(mpatches.Wedge((0, 0), r_outer, theta_hi, theta_lo,
-                                    width=r_outer - r_inner, facecolor=color,
-                                    edgecolor="none", linewidth=0))
+    def donut_path(lo, hi):
+        x1, y1 = pt(lo, r_outer); x2, y2 = pt(hi, r_outer)
+        x3, y3 = pt(hi, r_inner); x4, y4 = pt(lo, r_inner)
+        return (f"M{x1:.2f},{y1:.2f} A{r_outer},{r_outer} 0 0,1 {x2:.2f},{y2:.2f} "
+                f"L{x3:.2f},{y3:.2f} A{r_inner},{r_inner} 0 0,0 {x4:.2f},{y4:.2f} Z")
 
-    # Crisp separator lines at the zone boundaries.
-    for v in [T.MEDIUM_RISK_AT, T.HIGH_RISK_AT]:
-        ang = np.radians(180 - (v / 100) * 180)
-        ax.plot([r_inner * np.cos(ang), r_outer * np.cos(ang)],
-                [r_inner * np.sin(ang), r_outer * np.sin(ang)],
-                color=T.TEXT, linewidth=2.0, zorder=4)
+    zone_paths = "".join(
+        f'<path d="{donut_path(lo, hi)}" fill="{color}" stroke="none"/>'
+        for lo, hi, color in zones
+    )
+    boundary_lines = "".join(
+        f'<line x1="{pt(v, r_inner)[0]:.2f}" y1="{pt(v, r_inner)[1]:.2f}" '
+        f'x2="{pt(v, r_outer)[0]:.2f}" y2="{pt(v, r_outer)[1]:.2f}" '
+        f'stroke="{T.TEXT}" stroke-width="2"/>'
+        for v in [T.MEDIUM_RISK_AT, T.HIGH_RISK_AT]
+    )
+    tick_labels = "".join(
+        f'<text x="{pt(v, r_outer + 20)[0]:.2f}" y="{pt(v, r_outer + 20)[1]:.2f}" '
+        f'text-anchor="middle" dominant-baseline="middle" font-size="13" fill="{T.GRAY}">{v}%</text>'
+        for v in [0, 33, 66, 100]
+    )
+    bx1, by1 = pt(baseline_pct, r_outer); bx2, by2 = pt(baseline_pct, r_outer + 12)
+    baseline_tick = (f'<line x1="{bx1:.2f}" y1="{by1:.2f}" x2="{bx2:.2f}" y2="{by2:.2f}" '
+                     f'stroke="{T.TEXT}" stroke-width="3" stroke-linecap="round"/>')
 
-    # Value-fill arc from 0% up to the predicted value.
-    if pct > 0:
-        fill_theta_lo = 180 - (min(pct, 100) / 100) * 180
-        ax.add_patch(mpatches.Wedge((0, 0), r_outer, fill_theta_lo, 180,
-                                    width=r_outer - r_inner, facecolor=bar_color,
-                                    edgecolor="none", zorder=2))
+    arc_r = (r_outer + r_inner) / 2
+    x1, y1 = pt(0, arc_r); x2, y2 = pt(100, arc_r)
+    track_len = np.pi * arc_r
+    fill_path = f'M{x1:.2f},{y1:.2f} A{arc_r},{arc_r} 0 0,1 {x2:.2f},{y2:.2f}'
+    fill_len = (max(pct, 0) / 100) * track_len
 
-    for v in [0, 33, 66, 100]:
-        ang = np.radians(180 - (v / 100) * 180)
-        ax.text(1.14 * np.cos(ang), 1.14 * np.sin(ang), f"{v}%",
-                ha="center", va="center", fontsize=9, color=T.GRAY)
+    needle_len = r_inner * 0.98
+    duration = 900 if animate else 0
 
-    # Baseline reference: a short dark tick just outside the ring.
-    base_ang = np.radians(180 - (baseline_pct / 100) * 180)
-    ax.plot([r_outer * np.cos(base_ang), 1.08 * np.cos(base_ang)],
-            [r_outer * np.sin(base_ang), 1.08 * np.sin(base_ang)],
-            color=T.TEXT, linewidth=2.5, solid_capstyle="round")
-
-    # Needle - a slim kite pivoting at the hub, pointing at pct.
-    needle_ang = np.radians(180 - (pct / 100) * 180)
-    tip = (r_inner * 0.98 * np.cos(needle_ang), r_inner * 0.98 * np.sin(needle_ang))
-    base_l = (0.09 * np.cos(needle_ang + np.pi / 2), 0.09 * np.sin(needle_ang + np.pi / 2))
-    base_r = (0.09 * np.cos(needle_ang - np.pi / 2), 0.09 * np.sin(needle_ang - np.pi / 2))
-    ax.add_patch(mpatches.Polygon([base_l, tip, base_r], closed=True,
-                                  facecolor=T.TEXT, edgecolor=T.TEXT, zorder=5))
-    ax.add_patch(mpatches.Circle((0, 0), 0.09, facecolor=T.TEXT, edgecolor="white",
-                                 linewidth=1.5, zorder=6))
-
-    ax.text(0, -0.32, f"{pct:.1f}%", ha="center", va="center",
-            fontsize=22, fontweight="bold", color=bar_color)
-
-    ax.set_xlim(-1.25, 1.25)
-    ax.set_ylim(-0.5, 1.25)
-    ax.set_aspect("equal")
-    ax.axis("off")
-    fig.patch.set_alpha(0.0)
-    fig.tight_layout()
-    return fig
+    html = f"""
+    <div style="display:flex;justify-content:center;">
+    <svg viewBox="0 0 300 190" width="100%" style="max-width:420px;">
+      {zone_paths}
+      {boundary_lines}
+      <path d="{fill_path}" fill="none" stroke="{bar_color}" stroke-width="{r_outer - r_inner:.0f}"
+            stroke-dasharray="{track_len:.2f}" stroke-dashoffset="{track_len:.2f}"
+            id="fillArc" style="transition: stroke-dashoffset {duration}ms cubic-bezier(0.22,1,0.36,1),
+                                 stroke {duration}ms ease;"/>
+      {tick_labels}
+      {baseline_tick}
+      <g id="needleGroup" style="transform-origin:{cx}px {cy}px;
+                                  transform:rotate(180deg);
+                                  transition: transform {duration}ms cubic-bezier(0.22,1,0.36,1);">
+        <polygon points="{cx-7},{cy} {cx+needle_len},{cy} {cx+7},{cy}" fill="{T.TEXT}"/>
+      </g>
+      <circle cx="{cx}" cy="{cy}" r="9" fill="{T.TEXT}" stroke="white" stroke-width="1.5"/>
+      <text id="pctText" x="{cx}" y="{cy+55}" text-anchor="middle"
+            font-size="28" font-weight="bold" fill="{bar_color}">0.0%</text>
+    </svg>
+    </div>
+    <script>
+      (function() {{
+        const finalPct = {pct};
+        const needleAngle = 180 - (finalPct / 100) * 180;
+        const fillOffset = {track_len:.2f} - {fill_len:.2f};
+        const needle = document.getElementById("needleGroup");
+        const arc = document.getElementById("fillArc");
+        const label = document.getElementById("pctText");
+        requestAnimationFrame(function() {{
+          needle.style.transform = `rotate(${{needleAngle}}deg)`;
+          arc.style.strokeDashoffset = fillOffset;
+        }});
+        const dur = {duration};
+        if (dur === 0) {{
+          label.textContent = finalPct.toFixed(1) + "%";
+        }} else {{
+          const start = performance.now();
+          function tick(now) {{
+            const t = Math.min((now - start) / dur, 1);
+            const eased = 1 - Math.pow(1 - t, 3);
+            label.textContent = (finalPct * eased).toFixed(1) + "%";
+            if (t < 1) requestAnimationFrame(tick);
+          }}
+          requestAnimationFrame(tick);
+        }}
+      }})();
+    </script>
+    """
+    return html
 
 
 BEST_MODEL_NAME = bundle["best_model_name"]
@@ -553,25 +585,12 @@ with tab_scorer:
                     k2.metric("Risk band", "-")
                     k3.metric("Similar customers", "-")
 
-                with st.container(key="gauge_chart"):
-                    gauge_slot = st.empty()
-                    if result and just_scored:
-                        # Sweep the needle from 0 up to the scored value. 14
-                        # frames at ~40ms of real Matplotlib render time each
-                        # (measured) plus a short pause reads as a smooth
-                        # reveal without noticeably delaying the click.
-                        for step in np.linspace(0, pct, 14):
-                            frame_color = T.risk_band(step)[1] if step > 0 else T.GRAY
-                            frame = render_speedometer(step, frame_color,
-                                                       BASELINE_CHURN * 100)
-                            gauge_slot.pyplot(frame, width="stretch")
-                            plt.close(frame)
-                            time.sleep(0.16)
-                    else:
-                        static = render_speedometer(pct, bar_color,
-                                                    BASELINE_CHURN * 100)
-                        gauge_slot.pyplot(static, width="stretch")
-                        plt.close(static)
+                    with st.container(key="gauge_chart"):
+                    st.components.v1.html(
+                        render_speedometer_html(pct, bar_color, BASELINE_CHURN * 100,
+                                                animate=just_scored),
+                        height=250,
+                    )
 
                 if result:
                     st.caption(f"Dark tick marks the overall baseline churn rate "
