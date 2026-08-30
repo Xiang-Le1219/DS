@@ -1,6 +1,6 @@
 """
 BMDS2003 Data Science - Deployment Prototype
-Telco Customer Churn Risk Scorer
+Telcom Customer Churn Risk Scorer
 
 Run locally:  streamlit run app.py
 
@@ -16,14 +16,14 @@ import streamlit as st
 import numpy as np
 import streamlit as st
 
-st.set_page_config(page_title="Telco Churn Risk Scorer", page_icon="\U0001F4E1",
+st.set_page_config(page_title="Telcom Churn Risk Scorer", page_icon="\U0001F4E1",
                    layout="wide")
 
 import analysis as A
 import charts as C
 import theme as T
 
-st.title("Telco Customer Churn Risk Scorer")
+st.title("Telcom Customer Churn Risk Scorer")
 st.caption("BMDS2003 Data Science - Group Assignment Deployment Prototype")
 
 bundle = A.load_bundle()
