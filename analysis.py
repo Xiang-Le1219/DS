@@ -1,4 +1,4 @@
-"""Data loading and model analysis for the Telco churn dashboard.
+"""Data loading and model analysis for the Telcom churn dashboard.
 
 Everything the interactive charts need is computed here, live from the CSVs and
 the trained models, so the dashboard no longer depends on the notebook's static
