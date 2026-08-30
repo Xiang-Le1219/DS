@@ -1,4 +1,4 @@
-"""Interactive Plotly figures for the Telco churn dashboard.
+"""Interactive Plotly figures for the Telcom churn dashboard.
 
 Every figure here replaces one of the notebook's static PNG exports. Because
 they are built live, the reader can hover for exact values, zoom, toggle series
