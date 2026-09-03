@@ -119,11 +119,12 @@ def render_speedometer_html(pct, bar_color, baseline_pct, animate=True):
     <div style="display:flex;justify-content:center;">
     <svg viewBox="0 0 320 225" width="100%" style="max-width:420px;">
       {zone_paths}
-      {boundary_lines}
-      <path d="{fill_path}" fill="none" stroke="{bar_color}" stroke-width="{r_outer - r_inner:.0f}"
+       <path d="{fill_path}" fill="none" stroke="{bar_color}" stroke-width="{r_outer - r_inner:.0f}"
             stroke-dasharray="{track_len:.2f}" stroke-dashoffset="{track_len:.2f}"
             id="fillArc" style="transition: stroke-dashoffset {duration}ms cubic-bezier(0.22,1,0.36,1),
                                  stroke {duration}ms ease;"/>
+      {boundary_lines}
+     
       {tick_labels}
       {baseline_tick}
       <g id="needleGroup" style="transform-origin:{cx}px {cy}px;
